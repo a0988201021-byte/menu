@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅の注文 - 專業修復版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <style>
+        body { background-color: #fcfaf2; color: #3d3d3d; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .loader { border: 3px solid #e6e2d8; border-top: 3px solid #8da399; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .friend-chip { transition: all 0.2s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: bold; cursor: pointer; border: 2px solid transparent; }
+        .friend-active { background-color: #3d3d3d; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .friend-inactive { background-color: #e6e2d8; color: #555; }
+        
+        .qty-btn-minus { background-color: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; width: 36px; height: 36px; border-radius: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .qty-btn-plus { background-color: #8da399; color: white; width: 36px; height: 36px; border-radius: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .qty-number { font-size: 18px; font-weight: 800; color: #1f2937; min-width: 28px; text-align: center; }
+
+        .page-tab-active { background-color: #8da399; color: white; border-color: #8da399; }
+        .info-card { background-color: #fff9db; border: 1px solid #ffe066; color: #856404; }
+    </style>
+</head>
+<body class="pb-36 overflow-x-hidden">
+
+    <!-- 頂部導覽 -->
+    <div class="sticky top-0 z-40 bg-[#fcfaf2]/95 backdrop-blur-md shadow-sm border-b border-[#e6e2d8]">
+        <div class="px-4 py-3 flex justify-between items-center max-w-md mx-auto">
+            <h1 class="text-xl font-black tracking-tighter text-jp-text">旅の注文 <span class="text-[9px] bg-jp-green text-white px-1.5 py-0.5 rounded-full uppercase">Stable Pro</span></h1>
+            <button onclick="clearAllData()" class="text-red-400 p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+        </div>
+        <div class="px-3 pb-3 max-w-md mx-auto">
+            <div class="flex space-x-2 overflow-x-auto no-scrollbar items-center py-2" id="friendListContainer"></div>
+        </div>
+        <div id="navTabs" class="hidden flex border-t border-[#e6e2d8] max-w-md mx-auto">
+            <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green">菜單點餐</button>
+            <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-3 text-sm font-bold text-gray-400">分帳清單</button>
+        </div>
+    </div>
+
+    <div class="max-w-md mx-auto p-4 space-y-6">
+        
+        <!-- 💡 補充資訊區 -->
+        <div id="restaurantInfoBox" class="hidden info-card p-4 rounded-2xl shadow-sm text-sm space-y-2">
+            <div class="flex items-center gap-2 font-bold text-yellow-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                AI 餐廳小提醒
+            </div>
+            <div id="restaurantInfoContent" class="leading-relaxed whitespace-pre-wrap"></div>
+        </div>
+
+        <!-- 上傳區 -->
+        <div id="uploadSection" class="bg-white p-10 rounded-3xl border-2 border-dashed border-[#8da399] text-center shadow-sm">
+            <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+            <label for="fileInput" class="cursor-pointer block">
+                <div class="text-6xl mb-4">📸</div>
+                <div class="text-jp-green font-black text-xl">點擊拍攝菜單</div>
+                <div class="text-xs text-gray-400 mt-2 font-medium tracking-wide">支援多選，AI 自動分析</div>
+            </label>
+            <div id="previewArea" class="mt-6 grid grid-cols-3 gap-3"></div>
+            <button id="analyzeBtn" class="mt-8 w-full bg-[#8da399] text-white py-4 rounded-2xl font-black hidden shadow-xl active:scale-95 transition-all">🚀 開始 AI 解析</button>
+            <div id="errorMsg" class="hidden mt-6 text-xs text-red-500 bg-red-50 p-4 rounded-xl border border-red-100 text-left whitespace-pre-wrap"></div>
+        </div>
+
+        <!-- 菜單主內容 -->
+        <div id="mainContent" class="hidden space-y-5">
+            <div id="view-menu" class="space-y-4">
+                <div id="menuPageTabs" class="flex space-x-2 overflow-x-auto no-scrollbar"></div>
+                <div id="menuListContainer" class="grid grid-cols-1 gap-3"></div>
+                <button onclick="document.getElementById('fileInput').click()" class="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm font-bold">+ 追加下一頁</button>
+            </div>
+            <div id="view-bill" class="hidden space-y-4">
+                <div id="billListContainer" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部資訊 -->
+    <div id="footerBar" class="hidden fixed bottom-6 left-4 right-4 bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-5 z-30 flex justify-between items-center border border-gray-100 max-w-md mx-auto">
+        <div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estimated Total</div>
+            <div class="font-black text-2xl text-jp-text"><span id="currencyDisplay">¥</span> <span id="grandTotal">0</span></div>
+        </div>
+        <button onclick="openFinalModal()" class="bg-[#3d3d3d] text-white px-10 py-3.5 rounded-2xl font-black shadow-lg">確認點餐</button>
+    </div>
+
+    <!-- 點餐清單 Modal -->
+    <div id="orderModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+            <div class="p-6 text-center space-y-5">
+                <h2 class="text-2xl font-black">注文リスト (點餐單)</h2>
+                <div id="finalOrderList" class="bg-gray-50 rounded-2xl p-5 text-left max-h-[50vh] overflow-y-auto space-y-4"></div>
+                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-4 bg-[#3d3d3d] text-white font-black">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🛠️ API 與模型設定
+        const API_KEY = "AIzaSyD6NPIRnpYsKs-vxn3FmY0MgABjlaB_TtQ";
+        const MODEL = "gemini-2.5-flash";
+
+        let menuItems = [], friends = [{ id: 'share', name: '公費/大家', cart: {} }];
+        let restaurantInfo = "", originalCurrency = '¥', currentFriendId = 'share', currentMenuPage = 1, globalIdCounter = 0;
+
+        // 💾 資料持久化
+        function saveData() {
+            const data = { menuItems, friends, originalCurrency, globalIdCounter, restaurantInfo };
+            localStorage.setItem('travel_order_v4', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('travel_order_v4');
+            if (saved) {
+                const data = JSON.parse(saved);
+                menuItems = data.menuItems || [];
+                friends = data.friends || [{ id: 'share', name: '公費/大家', cart: {} }];
+                originalCurrency = data.originalCurrency || '¥';
+                globalIdCounter = data.globalIdCounter || 0;
+                restaurantInfo = data.restaurantInfo || "";
+                
+                if (menuItems.length > 0) {
+                    document.getElementById('uploadSection').classList.add('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    document.getElementById('footerBar').classList.remove('hidden');
+                    document.getElementById('navTabs').classList.remove('hidden');
+                    renderMenu(); renderFriendList(); renderInfo();
+                }
+            }
+        }
+
+        function clearAllData() {
+            if (confirm("確定要重置資料嗎？")) {
+                localStorage.removeItem('travel_order_v4');
+                location.reload();
+            }
+        }
+
+        // 🖼️ 圖片壓縮
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height, max = 1100;
+                    if (width > max || height > max) {
+                        if (width > height) { height *= max/width; width = max; }
+                        else { width *= max/height; height = max; }
+                    }
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // 🧠 AI 解析 (強化的 JSON 提取與錯誤回報)
+        async function analyzeMenu(base64Data, pageNum) {
+            const prompt = `你是一個專業助理。請分析圖片中的菜單。
+            1. 翻譯為繁體中文。
+            2. 提取補充資訊（如服務費、低消、限制）。
+            3. 以 JSON 回傳，格式：{"currency":"$", "supplementary_info":"...", "items":[{"original":"..", "translated":"..", "price":100}]}`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
+                        generationConfig: {
+                            response_mime_type: "application/json"
+                        }
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(`API 錯誤 (${res.status}): ${data.error?.message || '未知錯誤'}`);
+                }
+
+                if (!data.candidates || data.candidates[0].finishReason === "SAFETY") {
+                    throw new Error("圖片被 AI 安全過濾阻擋（可能含有敏感內容或人臉），請換張清晰圖片再試。");
+                }
+
+                const text = data.candidates[0].content.parts[0].text;
+                // 容錯解析：即使不是純 JSON 也嘗試提取
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("AI 回傳內容不符合格式");
+
+                const result = JSON.parse(jsonMatch[0]);
+                result.page = pageNum;
+                return result;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        // 🔘 解析流程
+        document.getElementById('analyzeBtn').addEventListener('click', async function() {
+            const btn = document.getElementById('analyzeBtn');
+            const errDiv = document.getElementById('errorMsg');
+            const files = Array.from(document.getElementById('fileInput').files);
+            
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader mx-auto"></div>`;
+            errDiv.classList.add('hidden');
+            
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const pageNum = (menuItems.length > 0 ? Math.max(...menuItems.map(m=>m.page)) : 0) + 1;
+                    const base64 = await compressImage(files[i]);
+                    const result = await analyzeMenu(base64, pageNum);
+                    
+                    if (result.items) {
+                        const formatted = result.items.map(it => ({
+                            ...it, id: 'it_'+(globalIdCounter++), page: result.page, price: parseFloat(it.price)||0
+                        }));
+                        menuItems = [...menuItems, ...formatted];
+                        originalCurrency = result.currency || originalCurrency;
+                        if (result.supplementary_info) {
+                            restaurantInfo += (restaurantInfo ? "\n" : "") + result.supplementary_info;
+                        }
+                    }
+                    // 每張圖隔一秒避免 429 錯誤
+                    if (i < files.length - 1) await new Promise(r => setTimeout(r, 1200));
+                }
+                saveData();
+                location.reload();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerText = "🚀 開始 AI 解析";
+                errDiv.innerText = "❌ 解析失敗原因：\n" + err.message;
+                errDiv.classList.remove('hidden');
+            }
+        });
+
+        // UI 渲染 (維持先前版本優點)
+        function renderMenu() {
+            const container = document.getElementById('menuListContainer');
+            const tabs = document.getElementById('menuPageTabs');
+            const pages = [...new Set(menuItems.map(i => i.page))].sort((a,b)=>a-b);
+            
+            tabs.innerHTML = '';
+            pages.forEach(p => {
+                const b = document.createElement('button');
+                b.className = `px-5 py-1.5 rounded-full text-xs font-bold border-2 ${p === currentMenuPage ? 'page-tab-active border-[#8da399]' : 'bg-white border-gray-100 text-gray-400'}`;
+                b.innerText = `第 ${p} 頁`;
+                b.onclick = () => { currentMenuPage = p; renderMenu(); };
+                tabs.appendChild(b);
+            });
+
+            container.innerHTML = '';
+            const items = menuItems.filter(i => i.page === currentMenuPage);
+            items.forEach(item => {
+                const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
+                const div = document.createElement('div');
+                div.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between";
+                div.innerHTML = `
+                    <div class="flex-1 pr-4">
+                        <div class="font-bold text-gray-800 text-base leading-tight">${item.translated}</div>
+                        <div class="text-[10px] text-gray-400 mt-1 truncate">${item.original}</div>
+                        <div class="text-orange-600 font-black mt-1">${originalCurrency}${item.price}</div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button onclick="updateCart('${item.id}', -1)" class="qty-btn-minus">-</button>
+                        <span class="qty-number">${qty}</span>
+                        <button onclick="updateCart('${item.id}', 1)" class="qty-btn-plus">+</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('currencyDisplay').innerText = originalCurrency;
+            updateGrandTotal();
+        }
+
+        function renderInfo() {
+            const box = document.getElementById('restaurantInfoBox');
+            const content = document.getElementById('restaurantInfoContent');
+            if (restaurantInfo) { box.classList.remove('hidden'); content.innerText = restaurantInfo; }
+        }
+
+        function updateCart(itemId, delta) {
+            const friend = friends.find(f => f.id === currentFriendId);
+            const next = (friend.cart[itemId] || 0) + delta;
+            if (next >= 0) {
+                if (next === 0) delete friend.cart[itemId];
+                else friend.cart[itemId] = next;
+                saveData(); renderMenu();
+            }
+        }
+
+        function renderFriendList() {
+            const container = document.getElementById('friendListContainer');
+            container.innerHTML = `<button onclick="const n=prompt('名字？'); if(n){ friends.push({id:'f_'+Date.now(), name:n, cart:{}}); saveData(); renderFriendList(); }" class="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex-shrink-0 text-gray-400 font-bold">+</button>`;
+            friends.forEach(f => {
+                const div = document.createElement('div');
+                div.className = `friend-chip whitespace-nowrap shadow-sm ${f.id === currentFriendId ? 'friend-active' : 'friend-inactive'}`;
+                div.innerText = f.name;
+                div.onclick = () => { currentFriendId = f.id; renderFriendList(); renderMenu(); };
+                container.appendChild(div);
+            });
+        }
+
+        function updateGrandTotal() {
+            let total = 0;
+            friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) total += it.price * q; }); });
+            document.getElementById('grandTotal').innerText = total.toLocaleString();
+        }
+
+        function switchTab(t) {
+            document.getElementById('view-menu').classList.toggle('hidden', t !== 'menu');
+            document.getElementById('view-bill').classList.toggle('hidden', t !== 'bill');
+            const tm = document.getElementById('tab-menu'), tb = document.getElementById('tab-bill');
+            tm.className = t === 'menu' ? "flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green" : "flex-1 py-3 text-sm font-bold text-gray-400";
+            tb.className = t === 'bill' ? "flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green" : "flex-1 py-3 text-sm font-bold text-gray-400";
+            if (t === 'bill') renderBill();
+        }
+
+        function renderBill() {
+            const container = document.getElementById('billListContainer'); container.innerHTML = '';
+            friends.forEach(f => {
+                let sub = 0, h = '';
+                Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) { sub += it.price * q; h += `<div class="flex justify-between text-xs py-1 text-gray-500"><span>${it.translated} x${q}</span><span>${originalCurrency}${it.price*q}</span></div>`; } });
+                if (sub > 0 || f.id === 'share') {
+                    const d = document.createElement('div'); d.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100";
+                    d.innerHTML = `<div class="flex justify-between font-black text-gray-800 border-b pb-3 mb-3"><span>${f.name}</span><span class="text-jp-green">${originalCurrency}${sub}</span></div>${h || '<div class="text-gray-300 text-center py-2 text-xs">尚未點餐</div>'}`;
+                    container.appendChild(d);
+                }
+            });
+        }
+
+        function openFinalModal() {
+            const totals = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { totals[id] = (totals[id] || 0) + q; }); });
+            const list = document.getElementById('finalOrderList'); list.innerHTML = '';
+            const entries = Object.entries(totals);
+            if (entries.length === 0) return;
+            entries.forEach(([id, q]) => {
+                const it = menuItems.find(m => m.id === id);
+                list.innerHTML += `<div class="flex justify-between items-start border-b border-gray-100 pb-3"><div class="flex flex-col flex-1 pr-4"><span class="text-xl font-black text-gray-900 leading-tight">${it.original}</span><span class="text-xs text-gray-400 mt-1">${it.translated}</span></div><div class="text-3xl font-black text-jp-green">x${q}</div></div>`;
+            });
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const area = document.getElementById('previewArea');
+            area.innerHTML = ''; area.classList.remove('hidden'); document.getElementById('analyzeBtn').classList.remove('hidden');
+            Array.from(e.target.files).forEach(f => {
+                const img = document.createElement('img'); img.src = URL.createObjectURL(f); img.className = "w-full h-20 object-cover rounded-xl border-2 border-white shadow-sm"; area.appendChild(img);
+            });
+        });
+
+        loadData(); renderFriendList();
+    </script>
+</body>
+</html>
