@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅の注文 - 終極排版修正版</title>
+    <title>旅の注文 - BYOK安全版</title>
     
     <!-- PWA 行動裝置全螢幕設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,7 +30,6 @@
         .page-tab-active { background-color: #8da399; color: white; border-color: #8da399; }
         .info-card { background-color: #fff9db; border: 1px solid #ffe066; color: #856404; }
 
-        /* 終極斷行邏輯：確保無論多長都必須在邊界內換行 */
         .text-break-all { 
             word-break: break-all !important; 
             overflow-wrap: break-word !important; 
@@ -44,10 +43,16 @@
     <!-- 頂部導覽 -->
     <div class="sticky top-0 z-40 bg-[#fcfaf2]/95 backdrop-blur-md shadow-sm border-b border-[#e6e2d8]">
         <div class="px-4 py-3 flex justify-between items-center max-w-md mx-auto">
-            <h1 class="text-xl font-black tracking-tighter text-jp-text">旅の注文 <span class="text-[9px] bg-jp-green text-white px-1.5 py-0.5 rounded-full uppercase">Stable v6</span></h1>
-            <button onclick="clearAllData()" class="text-red-400 p-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
+            <h1 class="text-xl font-black tracking-tighter text-jp-text">旅の注文 <span class="text-[9px] bg-jp-green text-white px-1.5 py-0.5 rounded-full uppercase">Secure v1</span></h1>
+            <div class="flex gap-2">
+                <!-- 設定金鑰按鈕 -->
+                <button onclick="setupApiKey()" class="text-gray-400 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </button>
+                <button onclick="clearAllData()" class="text-red-400 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            </div>
         </div>
         <div class="px-3 pb-3 max-w-md mx-auto">
             <div class="flex space-x-2 overflow-x-auto no-scrollbar items-center py-2" id="friendListContainer"></div>
@@ -59,7 +64,6 @@
     </div>
 
     <div class="max-w-md mx-auto p-4 space-y-5 w-full overflow-hidden">
-        
         <!-- 💡 補充資訊區 -->
         <div id="restaurantInfoBox" class="hidden info-card p-4 rounded-2xl shadow-sm text-sm space-y-2 w-full overflow-hidden">
             <div class="flex items-center gap-2 font-bold text-yellow-800">
@@ -86,7 +90,6 @@
         <div id="mainContent" class="hidden space-y-5 w-full overflow-hidden">
             <div id="view-menu" class="space-y-4 w-full overflow-hidden">
                 <div id="menuPageTabs" class="flex space-x-2 overflow-x-auto no-scrollbar w-full"></div>
-                <!-- 改為 flex-col 確保 100% 寬度被強制執行 -->
                 <div id="menuListContainer" class="flex flex-col gap-3 w-full overflow-hidden"></div>
                 <button onclick="document.getElementById('fileInput').click()" class="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm font-bold hover:bg-white">+ 追加菜單</button>
             </div>
@@ -107,7 +110,7 @@
 
     <!-- 點餐單 Modal -->
     <div id="orderModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+        <div class="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl">
             <div class="p-6 text-center space-y-5">
                 <h2 class="text-2xl font-black">注文列表 (點餐單)</h2>
                 <div id="finalOrderList" class="bg-gray-50 rounded-2xl p-5 text-left max-h-[50vh] overflow-y-auto space-y-5"></div>
@@ -117,8 +120,22 @@
     </div>
 
     <script>
-        const API_KEY = "AIzaSyD6NPIRnpYsKs-vxn3FmY0MgABjlaB_TtQ";
-        const MODEL_LIST = ["gemini-1.5-flash", "gemini-2.5-flash"];
+        // --- [修改部分] 移除硬編碼 API KEY，改從 LocalStorage 讀取 ---
+        const MODEL_LIST = ["gemini-1.5-flash", "gemini-2.0-flash"];
+
+        function getStoredApiKey() {
+            return localStorage.getItem('gemini_api_key') || "";
+        }
+
+        function setupApiKey() {
+            const currentKey = getStoredApiKey();
+            const newKey = prompt("請輸入您的 Gemini API Key:\n(此金鑰將僅存在您的手機瀏覽器中)", currentKey);
+            if (newKey !== null) {
+                localStorage.setItem('gemini_api_key', newKey.trim());
+                if (newKey.trim()) alert("API Key 已儲存！");
+            }
+        }
+        // -------------------------------------------------------
 
         let menuItems = [], friends = [{ id: 'share', name: '公費/大家', cart: {} }];
         let restaurantInfo = "", originalCurrency = '¥', currentFriendId = 'share', currentMenuPage = 1, globalIdCounter = 0;
@@ -172,33 +189,51 @@
             });
         }
 
+        // --- [修改部分] 呼叫 API 時讀取金鑰，若無則提示 ---
         async function analyzeMenu(base64Data, pageNum) {
-            const prompt = `Translate menu to Traditional Chinese. Also extract restaurant rules. Return JSON ONLY: {"currency":"symbol", "supplementary_info":"...", "items":[{"original":"name", "translated":"zh-TW name", "price":100}]}`;
+            const apiKey = getStoredApiKey();
+            if (!apiKey) {
+                setupApiKey();
+                throw new Error("請設定 API Key 後再試一次。");
+            }
+
+            const promptStr = `Translate menu to Traditional Chinese. Also extract restaurant rules. Return JSON ONLY: {"currency":"symbol", "supplementary_info":"...", "items":[{"original":"name", "translated":"zh-TW name", "price":100}]}`;
+            
             for (let modelName of MODEL_LIST) {
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
+                            contents: [{ parts: [{ text: promptStr }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
                             generationConfig: { response_mime_type: "application/json" }
                         })
                     });
                     const data = await res.json();
-                    if (!res.ok) continue;
+                    if (!res.ok) {
+                        if(data.error?.message.includes("API key not valid")) throw new Error("API Key 無效，請點擊齒輪重新設定。");
+                        continue;
+                    }
                     const result = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
                     result.page = pageNum;
                     return result;
-                } catch (e) { console.error(e); }
+                } catch (e) { 
+                    console.error(e);
+                    if (e.message.includes("重新設定")) throw e;
+                }
             }
-            throw new Error("解析失敗");
+            throw new Error("解析失敗，請確認網路或 API Key 狀態。");
         }
+        // -------------------------------------------------------
 
         document.getElementById('analyzeBtn').addEventListener('click', async function() {
             const btn = document.getElementById('analyzeBtn');
             const errDiv = document.getElementById('errorMsg');
             const files = Array.from(document.getElementById('fileInput').files);
+            
+            errDiv.classList.add('hidden');
             btn.disabled = true; btn.innerHTML = `<div class="loader mx-auto"></div>`;
+            
             try {
                 for (let i = 0; i < files.length; i++) {
                     const pageNum = (menuItems.length > 0 ? Math.max(...menuItems.map(m=>m.page)) : 0) + 1;
@@ -221,7 +256,6 @@
             }
         });
 
-        // 🎨 核心修正渲染邏輯
         function renderMenu() {
             const container = document.getElementById('menuListContainer');
             const tabs = document.getElementById('menuPageTabs');
@@ -241,7 +275,6 @@
             items.forEach(item => {
                 const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
                 const div = document.createElement('div');
-                // 加入 w-full 和 overflow-hidden 確保寬度鎖死
                 div.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-50 w-full overflow-hidden flex flex-col gap-3";
                 div.innerHTML = `
                     <div class="flex items-start justify-between w-full gap-2">
