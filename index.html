@@ -3,376 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅の注文 - BYOK安全版</title>
+    <title>旅の注文 - 終極修正版</title>
     
-    <!-- PWA 行動裝置全螢幕設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="旅の注文">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1048/1048953.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
-        body { background-color: #fcfaf2; color: #3d3d3d; -webkit-tap-highlight-color: transparent; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .loader { border: 3px solid #e6e2d8; border-top: 3px solid #8da399; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         
-        .friend-chip { transition: all 0.2s; display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
-        .friend-active { background-color: #3d3d3d; color: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .friend-inactive { background-color: #e6e2d8; color: #555; }
-        
-        .qty-btn-minus { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; width: 36px; height: 36px; border-radius: 10px; font-weight: bold; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .qty-btn-plus { background-color: #8da399; color: white; width: 36px; height: 36px; border-radius: 10px; font-weight: bold; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .qty-number { font-size: 18px; font-weight: 800; color: #1f2937; min-width: 32px; text-align: center; }
+        * { font-family: 'Noto Sans TC', sans-serif !important; }
 
-        .page-tab-active { background-color: #8da399; color: white; border-color: #8da399; }
-        .info-card { background-color: #fff9db; border: 1px solid #ffe066; color: #856404; }
-
-        .text-break-all { 
-            word-break: break-all !important; 
-            overflow-wrap: break-word !important; 
-            white-space: normal !important;
-            max-width: 100% !important;
+        body { 
+            background-color: #fdfaf5; 
+            color: #333; 
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent; 
         }
+
+        /* --- 圓角按鈕樣式 --- */
+        .chip { 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 18px !important;
+            border-radius: 9999px !important;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .chip-selected { 
+            background-color: #6b7280 !important;
+            color: white !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chip-unselected { 
+            background-color: #f3f4f6 !important;
+            color: #9ca3af !important;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 20px 0;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .del-x { 
+            margin-left: 6px;
+            width: 16px;
+            height: 16px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .card-pro { background: white; border-radius: 32px; border: 1px solid #f0f0f0; }
+
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #7d968b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="pb-36 overflow-x-hidden">
+<body class="pb-40">
 
-    <!-- 頂部導覽 -->
-    <div class="sticky top-0 z-40 bg-[#fcfaf2]/95 backdrop-blur-md shadow-sm border-b border-[#e6e2d8]">
-        <div class="px-4 py-3 flex justify-between items-center max-w-md mx-auto">
-            <h1 class="text-xl font-black tracking-tighter text-jp-text">旅の注文 <span class="text-[9px] bg-jp-green text-white px-1.5 py-0.5 rounded-full uppercase">Secure v1</span></h1>
-            <div class="flex gap-2">
-                <!-- 設定金鑰按鈕 -->
-                <button onclick="setupApiKey()" class="text-gray-400 p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </button>
-                <button onclick="clearAllData()" class="text-red-400 p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
+    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-100">
+        <div class="max-w-md mx-auto px-5">
+            <div class="header-container">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-[#7d968b] rounded-2xl flex items-center justify-center text-white text-xl font-black">L</div>
+                    <span class="text-2xl font-black tracking-tighter text-stone-800">旅の注文</span>
+                </div>
+                <div class="action-icons">
+                    <button onclick="setupApiKey()" class="icon-btn text-stone-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                    <button onclick="clearAllData()" class="icon-btn text-red-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="friendListContainer"></div>
+            <div id="navTabs" class="hidden flex border-t border-stone-50 mt-2">
+                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-4 text-sm font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
+                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-4 text-sm font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
             </div>
         </div>
-        <div class="px-3 pb-3 max-w-md mx-auto">
-            <div class="flex space-x-2 overflow-x-auto no-scrollbar items-center py-2" id="friendListContainer"></div>
-        </div>
-        <div id="navTabs" class="hidden flex border-t border-[#e6e2d8] max-w-md mx-auto">
-            <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green">菜單點餐</button>
-            <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-3 text-sm font-bold text-gray-400">分帳清單</button>
-        </div>
-    </div>
+    </nav>
 
-    <div class="max-w-md mx-auto p-4 space-y-5 w-full overflow-hidden">
-        <!-- 💡 補充資訊區 -->
-        <div id="restaurantInfoBox" class="hidden info-card p-4 rounded-2xl shadow-sm text-sm space-y-2 w-full overflow-hidden">
-            <div class="flex items-center gap-2 font-bold text-yellow-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                AI 餐廳小提醒
-            </div>
-            <div id="restaurantInfoContent" class="leading-relaxed whitespace-pre-wrap text-break-all"></div>
+    <main class="max-w-md mx-auto p-5 space-y-6">
+        <div id="restaurantInfoBox" class="hidden bg-[#fefce8] p-6 rounded-[2rem] border border-yellow-100 shadow-sm text-sm">
+            <div class="flex items-center gap-2 font-black text-yellow-800 mb-2">📄 菜單備註事項</div>
+            <div id="restaurantInfoContent" class="text-yellow-700 leading-relaxed font-medium"></div>
         </div>
 
-        <!-- 上傳區域 -->
-        <div id="uploadSection" class="bg-white p-8 rounded-3xl border-2 border-dashed border-[#8da399] text-center shadow-sm w-full">
+        <div id="uploadSection" class="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
             <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
-            <label for="fileInput" class="cursor-pointer block">
-                <div class="text-6xl mb-4">📸</div>
-                <div class="text-jp-green font-black text-xl">點擊拍攝菜單</div>
-                <div class="text-xs text-gray-400 mt-2">自動偵測幣別與服務費</div>
+            <label for="fileInput" class="cursor-pointer flex flex-col items-center">
+                <div class="w-20 h-20 bg-stone-50 rounded-[2rem] flex items-center justify-center mb-6 text-[#7d968b]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+                <div class="text-stone-800 font-black text-2xl">拍攝菜單 / 上傳照片</div>
+                <div class="text-stone-400 mt-2 font-bold text-sm">AI 將自動辨識價格並翻譯</div>
             </label>
-            <div id="previewArea" class="mt-4 grid grid-cols-3 gap-2"></div>
-            <button id="analyzeBtn" class="mt-6 w-full bg-[#8da399] text-white py-4 rounded-2xl font-black hidden shadow-lg">🚀 開始 AI 解析</button>
-            <div id="errorMsg" class="hidden mt-4 text-xs text-red-500 bg-red-50 p-4 rounded-xl border border-red-100 text-left whitespace-pre-wrap"></div>
+            <div id="previewArea" class="mt-8 grid grid-cols-3 gap-2"></div>
+            <button id="analyzeBtn" class="mt-8 w-full bg-[#7d968b] text-white py-5 rounded-[2rem] font-black hidden shadow-lg flex items-center justify-center gap-2">🚀 開始 AI 解析</button>
         </div>
 
-        <!-- 菜單主內容 -->
-        <div id="mainContent" class="hidden space-y-5 w-full overflow-hidden">
-            <div id="view-menu" class="space-y-4 w-full overflow-hidden">
-                <div id="menuPageTabs" class="flex space-x-2 overflow-x-auto no-scrollbar w-full"></div>
-                <div id="menuListContainer" class="flex flex-col gap-3 w-full overflow-hidden"></div>
-                <button onclick="document.getElementById('fileInput').click()" class="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm font-bold hover:bg-white">+ 追加菜單</button>
+        <div id="mainContent" class="hidden space-y-6">
+            <div id="categoryTabs" class="flex space-x-2 overflow-x-auto no-scrollbar pb-1"></div>
+            <div id="view-menu" class="space-y-4">
+                <div id="menuListContainer" class="flex flex-col gap-3"></div>
+                <button onclick="document.getElementById('fileInput').click()" class="w-full py-6 border-2 border-dashed border-stone-200 rounded-[2rem] text-stone-300 font-black hover:bg-white transition-all">+ 追加菜單照片</button>
             </div>
-            <div id="view-bill" class="hidden space-y-4 w-full overflow-hidden">
-                <div id="billListContainer" class="space-y-4 w-full overflow-hidden"></div>
+            <div id="view-bill" class="hidden space-y-4">
+                <div class="card-pro p-6 bg-stone-50/50 flex justify-between items-center text-sm font-black">
+                    <span>🏷️ 服務稅費加成 (%)</span>
+                    <input type="number" id="taxRateInput" value="0" onchange="updateFinanceSettings()" class="w-16 bg-white border border-stone-200 rounded-xl py-2 text-center outline-none font-black shadow-sm">
+                </div>
+                <div id="billListContainer" class="space-y-4"></div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <!-- 底部資訊列 -->
-    <div id="footerBar" class="hidden fixed bottom-6 left-4 right-4 bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-5 z-30 flex justify-between items-center border border-gray-100 max-w-md mx-auto">
+    <div id="footerBar" class="hidden fixed bottom-8 left-5 right-5 bg-stone-900 text-white rounded-[2.5rem] p-7 z-30 flex justify-between items-center max-w-md mx-auto shadow-2xl">
         <div>
-            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estimated Total</div>
-            <div class="font-black text-2xl text-jp-text leading-none mt-1"><span id="currencyDisplay">¥</span> <span id="grandTotal">0</span></div>
+            <div class="text-[10px] text-stone-500 font-black tracking-widest mb-1 uppercase tracking-tighter">Grand Total</div>
+            <div class="font-black text-3xl tracking-tighter"><span id="grandTotal">0</span><span class="text-xs font-normal ml-1">元</span></div>
         </div>
-        <button onclick="openFinalModal()" class="bg-[#3d3d3d] text-white px-8 py-3.5 rounded-2xl font-black shadow-lg">確認點餐</button>
+        <button onclick="openFinalModal()" class="bg-[#7d968b] px-10 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all">確認訂單</button>
     </div>
 
-    <!-- 點餐單 Modal -->
-    <div id="orderModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-6 text-center space-y-5">
-                <h2 class="text-2xl font-black">注文列表 (點餐單)</h2>
-                <div id="finalOrderList" class="bg-gray-50 rounded-2xl p-5 text-left max-h-[50vh] overflow-y-auto space-y-5"></div>
-                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-4 bg-[#3d3d3d] text-white font-black">返回修改</button>
+    <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-5">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl p-8 text-center space-y-8">
+            <h2 class="text-2xl font-black">點餐確認清單</h2>
+            <div id="finalOrderList" class="bg-stone-50 rounded-[2rem] p-6 text-left max-h-[45vh] overflow-y-auto space-y-5 border border-stone-100 no-scrollbar"></div>
+            <div class="flex flex-col gap-2">
+                <button onclick="copyOrderToClipboard()" class="w-full py-5 bg-stone-900 text-white rounded-2xl font-black">📋 複製內容 (LINE)</button>
+                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-2 text-stone-400 font-bold">返回修改</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- [修改部分] 移除硬編碼 API KEY，改從 LocalStorage 讀取 ---
         const MODEL_LIST = ["gemini-1.5-flash", "gemini-2.0-flash"];
+        let menuItems = [], friends = [];
+        let restaurantInfo = "", currentFriendId = 'share', currentCategory = '全部', globalIdCounter = 0;
+        let taxRate = 0;
 
-        function getStoredApiKey() {
-            return localStorage.getItem('gemini_api_key') || "";
-        }
-
+        function getStoredApiKey() { return localStorage.getItem('gemini_api_key') || ""; }
         function setupApiKey() {
-            const currentKey = getStoredApiKey();
-            const newKey = prompt("請輸入您的 Gemini API Key:\n(此金鑰將僅存在您的手機瀏覽器中)", currentKey);
-            if (newKey !== null) {
-                localStorage.setItem('gemini_api_key', newKey.trim());
-                if (newKey.trim()) alert("API Key 已儲存！");
-            }
+            const key = prompt("請輸入 Gemini API Key:", getStoredApiKey());
+            if (key !== null) { localStorage.setItem('gemini_api_key', key.trim()); alert("API Key 已儲存"); }
         }
-        // -------------------------------------------------------
-
-        let menuItems = [], friends = [{ id: 'share', name: '公費/大家', cart: {} }];
-        let restaurantInfo = "", originalCurrency = '¥', currentFriendId = 'share', currentMenuPage = 1, globalIdCounter = 0;
 
         function saveData() {
-            const data = { menuItems, friends, originalCurrency, globalIdCounter, restaurantInfo };
-            localStorage.setItem('travel_order_v6_stable', JSON.stringify(data));
+            localStorage.setItem('menu_v15_items', JSON.stringify({ menuItems, restaurantInfo, taxRate, globalIdCounter }));
+            localStorage.setItem('menu_v15_friends', JSON.stringify(friends));
         }
 
         function loadData() {
-            const saved = localStorage.getItem('travel_order_v6_stable');
-            if (saved) {
-                const data = JSON.parse(saved);
+            const itemsSaved = localStorage.getItem('menu_v15_items');
+            const friendsSaved = localStorage.getItem('menu_v15_friends');
+            friends = friendsSaved ? JSON.parse(friendsSaved) : [{ id: 'share', name: '共同', cart: {} }];
+            if (itemsSaved) {
+                const data = JSON.parse(itemsSaved);
                 menuItems = data.menuItems || [];
-                friends = data.friends || [{ id: 'share', name: '公費/大家', cart: {} }];
-                originalCurrency = data.originalCurrency || '¥';
-                globalIdCounter = data.globalIdCounter || 0;
                 restaurantInfo = data.restaurantInfo || "";
-                if (menuItems.length > 0) {
-                    document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('mainContent').classList.remove('hidden');
-                    document.getElementById('footerBar').classList.remove('hidden');
-                    document.getElementById('navTabs').classList.remove('hidden');
-                    renderMenu(); renderFriendList(); renderInfo();
-                }
+                taxRate = data.taxRate || 0;
+                globalIdCounter = data.globalIdCounter || 0;
+                document.getElementById('taxRateInput').value = taxRate;
+                if (menuItems.length > 0) showMainApp();
+            }
+            renderFriendList();
+        }
+
+        function showMainApp() {
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('footerBar').classList.remove('hidden');
+            document.getElementById('navTabs').classList.remove('hidden');
+            renderMenu(); renderInfo();
+        }
+
+        function addFriend() {
+            const n = prompt('輸入新成員名字：');
+            if (n) { friends.push({ id: 'f_' + Date.now(), name: n, cart: {} }); saveData(); renderFriendList(); }
+        }
+
+        function removeFriend(e, id) {
+            e.stopPropagation();
+            if (id === 'share') return;
+            if (confirm(`確定移除此成員？`)) {
+                friends = friends.filter(f => f.id !== id);
+                if (currentFriendId === id) currentFriendId = 'share';
+                saveData(); renderFriendList(); renderMenu();
             }
         }
 
+        function renderFriendList() {
+            const container = document.getElementById('friendListContainer');
+            container.innerHTML = `<div onclick="addFriend()" class="chip chip-unselected" style="border: 2px dashed #ddd;">＋ 新增</div>`;
+            friends.forEach(f => {
+                const isActive = f.id === currentFriendId;
+                const div = document.createElement('div');
+                div.className = `chip ${isActive ? 'chip-selected' : 'chip-unselected'}`;
+                div.innerHTML = `<span>${f.name}</span>${f.id !== 'share' ? `<span class="del-x" onclick="removeFriend(event, '${f.id}')">✕</span>` : ''}`;
+                div.onclick = () => { currentFriendId = f.id; renderFriendList(); renderMenu(); };
+                container.appendChild(div);
+            });
+        }
+
+        async function analyzeMenu(base64Data) {
+            const apiKey = getStoredApiKey();
+            if (!apiKey) { setupApiKey(); throw new Error("請填入 API Key"); }
+            const prompt = `你是一個專業的多國語言菜單分析官。請執行：
+            1. 將辨識到的語言全部翻譯為「繁體中文」(Traditional Chinese)。
+            2. 歸類「category」為：主食、飲品、小菜、甜點、或其它（繁體中文）。
+            3. 「supplementary_info」欄位：僅提取照片中關於低消、限時、服務費等實體規則，並且【絕對必須翻譯為繁體中文】。
+            4. 除了 original 欄位，其它 JSON 輸出嚴禁出現外文。若無備註則留空。
+            JSON: {"items": [{"original": "原文", "translated": "名稱", "price": 100, "category": "分類", "dietary": "禁忌", "is_recommended": boolean}], "supplementary_info": "繁體中文備註資訊"}`;
+
+            for (let model of MODEL_LIST) {
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }], generationConfig: { response_mime_type: "application/json" } })
+                    });
+                    const data = await res.json();
+                    if (res.ok) return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+                } catch (e) { console.error(e); }
+            }
+            throw new Error("解析失敗");
+        }
+
+        document.getElementById('analyzeBtn').addEventListener('click', async function() {
+            const btn = this;
+            const files = Array.from(document.getElementById('fileInput').files);
+            btn.disabled = true; btn.innerHTML = `<div class="loader"></div> <span>AI 解析中...</span>`;
+            try {
+                for (let f of files) {
+                    const b64 = await compressImage(f);
+                    const res = await analyzeMenu(b64);
+                    if (res.items) {
+                        menuItems = [...menuItems, ...res.items.map(it => ({ ...it, id: 'it_' + (globalIdCounter++), price: parseFloat(it.price)||0 }))];
+                        if (res.supplementary_info) restaurantInfo += (restaurantInfo ? " " : "") + res.supplementary_info;
+                    }
+                }
+                saveData(); showMainApp();
+            } catch (err) { alert(err.message); btn.disabled = false; btn.innerHTML = "🚀 開始 AI 解析"; }
+        });
+
+        function renderMenu() {
+            const container = document.getElementById('menuListContainer');
+            const catTabs = document.getElementById('categoryTabs');
+            const cats = ['全部', ...new Set(menuItems.map(i => i.category || '其它'))];
+            catTabs.innerHTML = cats.map(c => `<div onclick="currentCategory='${c}'; renderMenu();" class="chip ${currentCategory === c ? 'chip-selected' : 'chip-unselected'}">${c}</div>`).join('');
+
+            const filtered = currentCategory === '全部' ? menuItems : menuItems.filter(i => (i.category||'其它') === currentCategory);
+            container.innerHTML = filtered.map(item => {
+                const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
+                return `<div class="card-pro p-6 flex flex-col gap-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-black text-stone-800 text-lg leading-tight">${item.is_recommended ? '⭐ ' : ''}${item.translated}</div>
+                            <div class="text-[11px] text-stone-400 mt-1 font-bold">${item.original}</div>
+                            ${item.dietary ? `<div class="text-[10px] text-red-500 font-black mt-2 bg-red-50 inline-block px-2 py-0.5 rounded-lg">⚠️ ${item.dietary}</div>` : ''}
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-[#7d968b] text-xl">${item.price}<span class="text-[10px] ml-0.5">元</span></div>
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(item.original)}&tbm=isch" target="_blank" class="text-[10px] text-stone-300 underline font-black mt-2 inline-block">🔍 搜尋圖片</a>
+                        </div>
+                    </div>
+                    <div class="flex justify-end items-center gap-6">
+                        <div onclick="updateCart('${item.id}', -1)" class="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 font-black text-2xl flex items-center justify-center">－</div>
+                        <span class="text-3xl font-black min-w-[2rem] text-center">${qty}</span>
+                        <div onclick="updateCart('${item.id}', 1)" class="w-12 h-12 rounded-2xl bg-[#7d968b] text-white font-black text-2xl flex items-center justify-center">＋</div>
+                    </div>
+                </div>`;
+            }).join('');
+            updateGrandTotal();
+        }
+
+        function renderBill() {
+            const container = document.getElementById('billListContainer');
+            container.innerHTML = friends.map(f => {
+                let sub = 0, itemsHtml = '';
+                Object.entries(f.cart).forEach(([id, q]) => {
+                    const it = menuItems.find(m => m.id === id);
+                    if (it) { sub += it.price * q; itemsHtml += `<div class="flex flex-col py-3 border-b border-stone-50 font-bold"><div class="flex justify-between text-sm"><span>${it.translated} x ${q}</span><span>${(it.price * q).toLocaleString()}元</span></div><div class="text-[10px] text-stone-300">${it.original}</div></div>`; }
+                });
+                const total = sub * (1 + taxRate / 100);
+                if (sub === 0 && f.id !== 'share') return '';
+                return `<div class="card-pro p-7"><div class="flex justify-between items-center border-b pb-5 mb-5"><div class="text-2xl font-black">${f.name}</div><div class="text-2xl font-black text-[#7d968b]">${total.toLocaleString()}元</div></div><div class="space-y-1 mb-5">${itemsHtml || '<div class="text-xs text-stone-300 text-center">尚未點餐</div>'}</div>${sub > 0 ? `<div class="bg-stone-50 p-4 rounded-2xl text-xs font-bold text-stone-400"><div class="flex justify-between"><span>小計</span><span>${sub}元</span></div><div class="flex justify-between"><span>服務稅費 (${taxRate}%)</span><span>+${(sub*taxRate/100).toFixed(0)}元</span></div></div>` : ''}</div>`;
+            }).join('');
+        }
+
+        function updateGrandTotal() {
+            let t = 0; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) t += it.price * q; }); });
+            document.getElementById('grandTotal').innerText = (t * (1 + taxRate / 100)).toLocaleString();
+        }
+
+        function updateFinanceSettings() { taxRate = parseFloat(document.getElementById('taxRateInput').value) || 0; saveData(); updateGrandTotal(); if (document.getElementById('tab-bill').classList.contains('text-stone-800')) renderBill(); }
+
+        function switchTab(t) {
+            const isMenu = t === 'menu';
+            document.getElementById('view-menu').classList.toggle('hidden', !isMenu);
+            document.getElementById('view-bill').classList.toggle('hidden', isMenu);
+            document.getElementById('tab-menu').className = `flex-1 py-4 text-sm font-black border-b-4 ${isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
+            document.getElementById('tab-bill').className = `flex-1 py-4 text-sm font-black border-b-4 ${!isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
+            if (!isMenu) renderBill();
+        }
+
+        // --- 修正後的清除功能：清空菜單與所有人的購物車，但保留成員名單 ---
         function clearAllData() {
-            if (confirm("確定要重置資料嗎？")) {
-                localStorage.removeItem('travel_order_v6_stable');
+            if (confirm("清除菜單與點餐內容？（成員清單將保留）")) {
+                // 1. 清空菜單數據
+                menuItems = [];
+                restaurantInfo = "";
+                globalIdCounter = 0;
+
+                // 2. 清空每個人的點餐 cart，但保留朋友對象
+                friends.forEach(f => {
+                    f.cart = {};
+                });
+
+                // 3. 儲存至正確的鍵名 v15
+                saveData();
+
+                // 4. 重新整理頁面以清空畫面
                 location.reload();
             }
         }
 
         async function compressImage(file) {
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height, max = 1100;
-                    if (width > max || height > max) {
-                        if (width > height) { height *= max/width; width = max; }
-                        else { width *= max/height; height = max; }
-                    }
-                    canvas.width = width; canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    let w = img.width, h = img.height, max = 1100;
+                    if (w > max || h > max) { if (w > h) { h *= max/w; w = max; } else { w *= max/h; h = max; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
                 };
                 img.src = URL.createObjectURL(file);
             });
         }
 
-        // --- [修改部分] 呼叫 API 時讀取金鑰，若無則提示 ---
-        async function analyzeMenu(base64Data, pageNum) {
-            const apiKey = getStoredApiKey();
-            if (!apiKey) {
-                setupApiKey();
-                throw new Error("請設定 API Key 後再試一次。");
-            }
-
-            const promptStr = `Translate menu to Traditional Chinese. Also extract restaurant rules. Return JSON ONLY: {"currency":"symbol", "supplementary_info":"...", "items":[{"original":"name", "translated":"zh-TW name", "price":100}]}`;
-            
-            for (let modelName of MODEL_LIST) {
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: promptStr }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
-                            generationConfig: { response_mime_type: "application/json" }
-                        })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) {
-                        if(data.error?.message.includes("API key not valid")) throw new Error("API Key 無效，請點擊齒輪重新設定。");
-                        continue;
-                    }
-                    const result = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
-                    result.page = pageNum;
-                    return result;
-                } catch (e) { 
-                    console.error(e);
-                    if (e.message.includes("重新設定")) throw e;
-                }
-            }
-            throw new Error("解析失敗，請確認網路或 API Key 狀態。");
-        }
-        // -------------------------------------------------------
-
-        document.getElementById('analyzeBtn').addEventListener('click', async function() {
-            const btn = document.getElementById('analyzeBtn');
-            const errDiv = document.getElementById('errorMsg');
-            const files = Array.from(document.getElementById('fileInput').files);
-            
-            errDiv.classList.add('hidden');
-            btn.disabled = true; btn.innerHTML = `<div class="loader mx-auto"></div>`;
-            
-            try {
-                for (let i = 0; i < files.length; i++) {
-                    const pageNum = (menuItems.length > 0 ? Math.max(...menuItems.map(m=>m.page)) : 0) + 1;
-                    const base64 = await compressImage(files[i]);
-                    const result = await analyzeMenu(base64, pageNum);
-                    if (result.items) {
-                        const formatted = result.items.map(it => ({
-                            ...it, id: 'it_'+(globalIdCounter++), page: result.page, price: parseFloat(it.price)||0
-                        }));
-                        menuItems = [...menuItems, ...formatted];
-                        originalCurrency = result.currency || originalCurrency;
-                        if (result.supplementary_info) restaurantInfo += (restaurantInfo ? "\n" : "") + result.supplementary_info;
-                    }
-                    if (i < files.length - 1) await new Promise(r => setTimeout(r, 1200));
-                }
-                saveData(); location.reload();
-            } catch (err) {
-                btn.disabled = false; btn.innerText = "🚀 開始 AI 解析";
-                errDiv.innerText = "❌ 解析失敗：" + err.message; errDiv.classList.remove('hidden');
-            }
-        });
-
-        function renderMenu() {
-            const container = document.getElementById('menuListContainer');
-            const tabs = document.getElementById('menuPageTabs');
-            const pages = [...new Set(menuItems.map(i => i.page))].sort((a,b)=>a-b);
-            
-            tabs.innerHTML = '';
-            pages.forEach(p => {
-                const b = document.createElement('button');
-                b.className = `px-5 py-1.5 rounded-full text-xs font-bold border-2 transition-all flex-shrink-0 ${p === currentMenuPage ? 'page-tab-active border-[#8da399]' : 'bg-white border-gray-100 text-gray-400'}`;
-                b.innerText = `第 ${p} 頁`;
-                b.onclick = () => { currentMenuPage = p; renderMenu(); };
-                tabs.appendChild(b);
-            });
-
-            container.innerHTML = '';
-            const items = menuItems.filter(i => i.page === currentMenuPage);
-            items.forEach(item => {
-                const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
-                const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-2xl shadow-sm border border-gray-50 w-full overflow-hidden flex flex-col gap-3";
-                div.innerHTML = `
-                    <div class="flex items-start justify-between w-full gap-2">
-                        <div class="flex-1 min-w-0">
-                            <div class="font-bold text-gray-800 text-base leading-tight text-break-all">${item.translated}</div>
-                            <div class="text-[10px] text-gray-400 mt-1 text-break-all">${item.original}</div>
-                        </div>
-                        <div class="text-orange-600 font-black text-sm whitespace-nowrap shrink-0 pt-0.5">${originalCurrency}${item.price}</div>
-                    </div>
-                    <div class="flex justify-end items-center gap-4 w-full">
-                        <button onclick="updateCart('${item.id}', -1)" class="qty-btn-minus">-</button>
-                        <span class="qty-number">${qty}</span>
-                        <button onclick="updateCart('${item.id}', 1)" class="qty-btn-plus">+</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            document.getElementById('currencyDisplay').innerText = originalCurrency;
-            updateGrandTotal();
-        }
-
-        function renderInfo() {
-            const box = document.getElementById('restaurantInfoBox');
-            const content = document.getElementById('restaurantInfoContent');
-            if (restaurantInfo) { box.classList.remove('hidden'); content.innerText = restaurantInfo; }
-        }
-
         function updateCart(itemId, delta) {
-            const friend = friends.find(f => f.id === currentFriendId);
-            const next = (friend.cart[itemId] || 0) + delta;
-            if (next >= 0) {
-                if (next === 0) delete friend.cart[itemId];
-                else friend.cart[itemId] = next;
-                saveData(); renderMenu();
-            }
+            const f = friends.find(f => f.id === currentFriendId);
+            const n = (f.cart[itemId] || 0) + delta;
+            if (n >= 0) { if (n === 0) delete f.cart[itemId]; else f.cart[itemId] = n; saveData(); renderMenu(); }
         }
 
-        function renderFriendList() {
-            const container = document.getElementById('friendListContainer');
-            container.innerHTML = `<button onclick="const n=prompt('名字？'); if(n){ friends.push({id:'f_'+Date.now(), name:n, cart:{}}); saveData(); renderFriendList(); }" class="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex-shrink-0 text-gray-400 font-bold">+</button>`;
-            friends.forEach(f => {
-                const div = document.createElement('div');
-                div.className = `friend-chip whitespace-nowrap shadow-sm ${f.id === currentFriendId ? 'friend-active' : 'friend-inactive'}`;
-                div.innerText = f.name;
-                div.onclick = () => { currentFriendId = f.id; renderFriendList(); renderMenu(); };
-                container.appendChild(div);
-            });
-        }
-
-        function updateGrandTotal() {
-            let total = 0;
-            friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) total += it.price * q; }); });
-            document.getElementById('grandTotal').innerText = total.toLocaleString();
-        }
-
-        function switchTab(t) {
-            document.getElementById('view-menu').classList.toggle('hidden', t !== 'menu');
-            document.getElementById('view-bill').classList.toggle('hidden', t !== 'bill');
-            const tm = document.getElementById('tab-menu'), tb = document.getElementById('tab-bill');
-            tm.className = t === 'menu' ? "flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green" : "flex-1 py-3 text-sm font-bold text-gray-400";
-            tb.className = t === 'bill' ? "flex-1 py-3 text-sm font-bold border-b-2 border-jp-green text-jp-green" : "flex-1 py-3 text-sm font-bold text-gray-400";
-            if (t === 'bill') renderBill();
-        }
-
-        function renderBill() {
-            const container = document.getElementById('billListContainer'); container.innerHTML = '';
-            friends.forEach(f => {
-                let sub = 0, h = '';
-                Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) { sub += it.price * q; h += `<div class="flex justify-between text-[11px] py-1 text-gray-500 text-break-all"><span class="flex-1">${it.translated} x${q}</span><span class="shrink-0 ml-2">${originalCurrency}${it.price*q}</span></div>`; } });
-                if (sub > 0 || f.id === 'share') {
-                    const d = document.createElement('div'); d.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 w-full overflow-hidden";
-                    d.innerHTML = `<div class="flex justify-between font-black text-gray-800 border-b pb-3 mb-3"><span>${f.name}</span><span class="text-jp-green">${originalCurrency}${sub}</span></div>${h || '<div class="text-gray-300 text-center py-2 text-xs">尚未點餐</div>'}`;
-                    container.appendChild(d);
-                }
-            });
+        function copyOrderToClipboard() {
+            const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
+            let txt = "📋 點餐摘要:\n"; Object.entries(tot).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); txt += `• ${it.original} (${it.translated}) x ${q}\n`; });
+            navigator.clipboard.writeText(txt).then(() => alert("訂單內容已複製"));
         }
 
         function openFinalModal() {
-            const totals = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { totals[id] = (totals[id] || 0) + q; }); });
-            const list = document.getElementById('finalOrderList'); list.innerHTML = '';
-            const entries = Object.entries(totals);
-            if (entries.length === 0) return;
-            entries.forEach(([id, q]) => {
+            const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
+            const list = document.getElementById('finalOrderList');
+            if (Object.keys(tot).length === 0) return;
+            list.innerHTML = Object.entries(tot).map(([id, q]) => {
                 const it = menuItems.find(m => m.id === id);
-                list.innerHTML += `<div class="flex justify-between items-start border-b border-gray-100 pb-4 w-full overflow-hidden"><div class="flex-1 min-w-0 pr-4"><span class="text-xl font-black text-gray-900 leading-tight text-break-all block">${it.original}</span><span class="text-xs text-gray-400 mt-1 text-break-all block">${it.translated}</span></div><div class="text-3xl font-black text-jp-green shrink-0">x${q}</div></div>`;
-            });
+                return `<div class="flex justify-between items-center border-b pb-4"><div><span class="font-black text-stone-900 block text-lg">${it.original}</span><span class="text-[10px] text-stone-400 block">${it.translated}</span></div><div class="text-3xl font-black text-[#7d968b]">x ${q}</div></div>`;
+            }).join('');
             document.getElementById('orderModal').classList.remove('hidden');
         }
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
-            const area = document.getElementById('previewArea');
-            area.innerHTML = ''; area.classList.remove('hidden'); document.getElementById('analyzeBtn').classList.remove('hidden');
+            const area = document.getElementById('previewArea'); area.innerHTML = '';
+            document.getElementById('analyzeBtn').classList.remove('hidden');
             Array.from(e.target.files).forEach(f => {
-                const img = document.createElement('img'); img.src = URL.createObjectURL(f); img.className = "w-full h-20 object-cover rounded-xl border-2 border-white shadow-sm"; area.appendChild(img);
+                const img = document.createElement('img'); img.src = URL.createObjectURL(f);
+                img.className = "w-full h-24 object-cover rounded-[1.5rem] border border-stone-100"; area.appendChild(img);
             });
         });
 
-        loadData(); renderFriendList();
+        function renderInfo() {
+            if (restaurantInfo.trim()) { document.getElementById('restaurantInfoBox').classList.remove('hidden'); document.getElementById('restaurantInfoContent').innerText = restaurantInfo; }
+        }
+
+        loadData();
     </script>
 </body>
 </html>
