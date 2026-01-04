@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅の注文 - 終極修正版</title>
+    <title>旅の注文 - 優化版</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,20 +21,19 @@
             -webkit-tap-highlight-color: transparent; 
         }
 
-        /* --- 圓角按鈕樣式 --- */
+        /* --- 修正：成員與分類按鈕變為圓角膠囊 --- */
         .chip { 
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 18px !important;
+            padding: 6px 14px !important; /* 縮小一點，適配多行顯示 */
             border-radius: 9999px !important;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px; /* 字體微調小一點 */
             transition: all 0.2s;
             border: none;
             cursor: pointer;
             white-space: nowrap;
-            margin-right: 8px;
         }
 
         .chip-selected { 
@@ -53,39 +52,38 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 20px 0;
+            padding: 15px 0 10px 0;
         }
 
         .action-icons {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
         }
 
         .icon-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: none;
             border: none;
             cursor: pointer;
-            padding: 0;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
         .del-x { 
-            margin-left: 6px;
-            width: 16px;
-            height: 16px;
+            margin-left: 4px;
+            width: 14px;
+            height: 14px;
             background: rgba(255,255,255,0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 8px;
         }
 
         .card-pro { background: white; border-radius: 32px; border: 1px solid #f0f0f0; }
@@ -96,26 +94,35 @@
 </head>
 <body class="pb-40">
 
-    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-100">
+    <!-- 頂部導覽列：包含固定分類與成員 -->
+    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-100 shadow-sm">
         <div class="max-w-md mx-auto px-5">
             <div class="header-container">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-[#7d968b] rounded-2xl flex items-center justify-center text-white text-xl font-black">L</div>
-                    <span class="text-2xl font-black tracking-tighter text-stone-800">旅の注文</span>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-[#7d968b] rounded-xl flex items-center justify-center text-white text-lg font-black">L</div>
+                    <span class="text-xl font-black tracking-tighter text-stone-800">旅の注文</span>
                 </div>
                 <div class="action-icons">
                     <button onclick="setupApiKey()" class="icon-btn text-stone-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     </button>
                     <button onclick="clearAllData()" class="icon-btn text-red-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     </button>
                 </div>
             </div>
-            <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2" id="friendListContainer"></div>
-            <div id="navTabs" class="hidden flex border-t border-stone-50 mt-2">
-                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-4 text-sm font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
-                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-4 text-sm font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
+            
+            <!-- 修正：成員列表改為自動折行 (Flex Wrap) -->
+            <div class="flex flex-wrap gap-y-2 gap-x-1 mb-3" id="friendListContainer"></div>
+
+            <!-- 修正：分類選單放進 Nav 並維持固定 -->
+            <div id="categoryWrapper" class="hidden">
+                <div class="flex space-x-1.5 overflow-x-auto no-scrollbar pb-3" id="categoryTabs"></div>
+            </div>
+
+            <div id="navTabs" class="hidden flex border-t border-stone-50">
+                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-sm font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
+                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-3 text-sm font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
             </div>
         </div>
     </nav>
@@ -126,21 +133,20 @@
             <div id="restaurantInfoContent" class="text-yellow-700 leading-relaxed font-medium"></div>
         </div>
 
-        <div id="uploadSection" class="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
+        <div id="uploadSection" class="bg-white p-10 rounded-[2.5rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
             <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
             <label for="fileInput" class="cursor-pointer flex flex-col items-center">
-                <div class="w-20 h-20 bg-stone-50 rounded-[2rem] flex items-center justify-center mb-6 text-[#7d968b]">
+                <div class="w-20 h-20 bg-stone-50 rounded-[2rem] flex items-center justify-center mb-4 text-[#7d968b]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                 </div>
-                <div class="text-stone-800 font-black text-2xl">拍攝菜單 / 上傳照片</div>
-                <div class="text-stone-400 mt-2 font-bold text-sm">AI 將自動辨識價格並翻譯</div>
+                <div class="text-stone-800 font-black text-xl">拍攝菜單 / 上傳照片</div>
+                <div class="text-stone-400 mt-2 font-bold text-xs">AI 將自動辨識價格並翻譯</div>
             </label>
             <div id="previewArea" class="mt-8 grid grid-cols-3 gap-2"></div>
             <button id="analyzeBtn" class="mt-8 w-full bg-[#7d968b] text-white py-5 rounded-[2rem] font-black hidden shadow-lg flex items-center justify-center gap-2">🚀 開始 AI 解析</button>
         </div>
 
-        <div id="mainContent" class="hidden space-y-6">
-            <div id="categoryTabs" class="flex space-x-2 overflow-x-auto no-scrollbar pb-1"></div>
+        <div id="mainContent" class="hidden space-y-4">
             <div id="view-menu" class="space-y-4">
                 <div id="menuListContainer" class="flex flex-col gap-3"></div>
                 <button onclick="document.getElementById('fileInput').click()" class="w-full py-6 border-2 border-dashed border-stone-200 rounded-[2rem] text-stone-300 font-black hover:bg-white transition-all">+ 追加菜單照片</button>
@@ -158,7 +164,7 @@
     <div id="footerBar" class="hidden fixed bottom-8 left-5 right-5 bg-stone-900 text-white rounded-[2.5rem] p-7 z-30 flex justify-between items-center max-w-md mx-auto shadow-2xl">
         <div>
             <div class="text-[10px] text-stone-500 font-black tracking-widest mb-1 uppercase tracking-tighter">Grand Total</div>
-            <div class="font-black text-3xl tracking-tighter"><span id="grandTotal">0</span><span class="text-xs font-normal ml-1">元</span></div>
+            <div class="font-black text-2xl tracking-tighter"><span id="grandTotal">0</span><span class="text-xs font-normal ml-1">元</span></div>
         </div>
         <button onclick="openFinalModal()" class="bg-[#7d968b] px-10 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all">確認訂單</button>
     </div>
@@ -212,6 +218,7 @@
             document.getElementById('mainContent').classList.remove('hidden');
             document.getElementById('footerBar').classList.remove('hidden');
             document.getElementById('navTabs').classList.remove('hidden');
+            document.getElementById('categoryWrapper').classList.remove('hidden');
             renderMenu(); renderInfo();
         }
 
@@ -340,29 +347,19 @@
             const isMenu = t === 'menu';
             document.getElementById('view-menu').classList.toggle('hidden', !isMenu);
             document.getElementById('view-bill').classList.toggle('hidden', isMenu);
+            // 切換時顯示/隱藏分類選單 (只有選菜時需要)
+            document.getElementById('categoryWrapper').classList.toggle('hidden', !isMenu);
+            
             document.getElementById('tab-menu').className = `flex-1 py-4 text-sm font-black border-b-4 ${isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
             document.getElementById('tab-bill').className = `flex-1 py-4 text-sm font-black border-b-4 ${!isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
             if (!isMenu) renderBill();
         }
 
-        // --- 修正後的清除功能：清空菜單與所有人的購物車，但保留成員名單 ---
         function clearAllData() {
             if (confirm("清除菜單與點餐內容？（成員清單將保留）")) {
-                // 1. 清空菜單數據
-                menuItems = [];
-                restaurantInfo = "";
-                globalIdCounter = 0;
-
-                // 2. 清空每個人的點餐 cart，但保留朋友對象
-                friends.forEach(f => {
-                    f.cart = {};
-                });
-
-                // 3. 儲存至正確的鍵名 v15
-                saveData();
-
-                // 4. 重新整理頁面以清空畫面
-                location.reload();
+                menuItems = []; restaurantInfo = ""; globalIdCounter = 0;
+                friends.forEach(f => { f.cart = {}; });
+                saveData(); location.reload();
             }
         }
 
@@ -393,13 +390,24 @@
             navigator.clipboard.writeText(txt).then(() => alert("訂單內容已複製"));
         }
 
+        // --- 修正：訂單摘要 Modal 排版優化 ---
         function openFinalModal() {
             const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
             const list = document.getElementById('finalOrderList');
             if (Object.keys(tot).length === 0) return;
+            
             list.innerHTML = Object.entries(tot).map(([id, q]) => {
                 const it = menuItems.find(m => m.id === id);
-                return `<div class="flex justify-between items-center border-b pb-4"><div><span class="font-black text-stone-900 block text-lg">${it.original}</span><span class="text-[10px] text-stone-400 block">${it.translated}</span></div><div class="text-3xl font-black text-[#7d968b]">x ${q}</div></div>`;
+                return `
+                <div class="flex justify-between items-center border-b border-stone-100 pb-4 gap-4">
+                    <div class="flex-1 min-w-0"> <!-- 名稱佔據剩餘空間 -->
+                        <span class="font-black text-stone-900 block leading-tight text-lg truncate">${it.original}</span>
+                        <span class="text-[11px] text-stone-400 block mt-1 truncate">${it.translated}</span>
+                    </div>
+                    <div class="text-3xl font-black text-[#7d968b] shrink-0 whitespace-nowrap"> <!-- 份數不折行、不縮小 -->
+                        x ${q}
+                    </div>
+                </div>`;
             }).join('');
             document.getElementById('orderModal').classList.remove('hidden');
         }
