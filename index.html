@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅の注文 - 優化版</title>
+    <title>旅の注文 - 專業精簡版</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,166 +16,126 @@
         body { 
             background-color: #fdfaf5; 
             color: #333; 
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             -webkit-tap-highlight-color: transparent; 
         }
 
-        /* --- 修正：成員與分類按鈕變為圓角膠囊 --- */
+        /* --- 圓角膠囊按鈕 --- */
         .chip { 
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 14px !important; /* 縮小一點，適配多行顯示 */
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 5px 12px !important;
             border-radius: 9999px !important;
-            font-weight: 700;
-            font-size: 13px; /* 字體微調小一點 */
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-            white-space: nowrap;
+            font-weight: 700; font-size: 12px;
+            transition: all 0.2s; border: none; cursor: pointer; white-space: nowrap;
         }
 
-        .chip-selected { 
-            background-color: #6b7280 !important;
-            color: white !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        /* 成員選中：深灰色 */
+        .chip-selected { background-color: #6b7280 !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 分類選中：品牌綠色 (與成員區隔) */
+        .cat-selected { background-color: #7d968b !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .chip-unselected { background-color: #f3f4f6 !important; color: #9ca3af !important; }
 
-        .chip-unselected { 
-            background-color: #f3f4f6 !important;
-            color: #9ca3af !important;
-        }
-
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 15px 0 10px 0;
-        }
-
-        .action-icons {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .icon-btn {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 8px 0; }
+        .action-icons { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        .del-x { 
-            margin-left: 4px;
-            width: 14px;
-            height: 14px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-        }
+        .del-x { margin-left: 4px; width: 14px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; }
 
-        .card-pro { background: white; border-radius: 32px; border: 1px solid #f0f0f0; }
+        /* 縮小後的菜單卡片樣式 */
+        .card-menu { background: white; border-radius: 20px; border: 1px solid #f0f0f0; padding: 12px 16px; }
 
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #7d968b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #7d968b; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="pb-40">
+<body class="pb-32">
 
-    <!-- 頂部導覽列：包含固定分類與成員 -->
+    <!-- 頂部導覽列 -->
     <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-100 shadow-sm">
-        <div class="max-w-md mx-auto px-5">
+        <div class="max-w-md mx-auto px-4">
             <div class="header-container">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-[#7d968b] rounded-xl flex items-center justify-center text-white text-lg font-black">L</div>
-                    <span class="text-xl font-black tracking-tighter text-stone-800">旅の注文</span>
+                    <div class="w-7 h-7 bg-[#7d968b] rounded-lg flex items-center justify-center text-white text-base font-black">L</div>
+                    <span class="text-lg font-black tracking-tighter text-stone-800">旅の注文</span>
                 </div>
                 <div class="action-icons">
                     <button onclick="setupApiKey()" class="icon-btn text-stone-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     </button>
                     <button onclick="clearAllData()" class="icon-btn text-red-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     </button>
                 </div>
             </div>
             
-            <!-- 修正：成員列表改為自動折行 (Flex Wrap) -->
-            <div class="flex flex-wrap gap-y-2 gap-x-1 mb-3" id="friendListContainer"></div>
+            <div class="flex flex-wrap gap-y-1.5 gap-x-1 mb-3" id="friendListContainer"></div>
 
-            <!-- 修正：分類選單放進 Nav 並維持固定 -->
+            <!-- 分類選單：保持固定 -->
             <div id="categoryWrapper" class="hidden">
                 <div class="flex space-x-1.5 overflow-x-auto no-scrollbar pb-3" id="categoryTabs"></div>
             </div>
 
             <div id="navTabs" class="hidden flex border-t border-stone-50">
-                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-sm font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
-                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-3 text-sm font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
+                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-2.5 text-xs font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
+                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-2.5 text-xs font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-md mx-auto p-5 space-y-6">
-        <div id="restaurantInfoBox" class="hidden bg-[#fefce8] p-6 rounded-[2rem] border border-yellow-100 shadow-sm text-sm">
-            <div class="flex items-center gap-2 font-black text-yellow-800 mb-2">📄 菜單備註事項</div>
+    <main class="max-w-md mx-auto p-4 space-y-4">
+        <div id="restaurantInfoBox" class="hidden bg-[#fefce8] p-5 rounded-[1.5rem] border border-yellow-100 shadow-sm text-xs">
+            <div class="flex items-center gap-2 font-black text-yellow-800 mb-1">📄 菜單備註</div>
             <div id="restaurantInfoContent" class="text-yellow-700 leading-relaxed font-medium"></div>
         </div>
 
-        <div id="uploadSection" class="bg-white p-10 rounded-[2.5rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
+        <div id="uploadSection" class="bg-white p-8 rounded-[2rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
             <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
             <label for="fileInput" class="cursor-pointer flex flex-col items-center">
-                <div class="w-20 h-20 bg-stone-50 rounded-[2rem] flex items-center justify-center mb-4 text-[#7d968b]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <div class="w-16 h-16 bg-stone-50 rounded-[1.5rem] flex items-center justify-center mb-4 text-[#7d968b]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                 </div>
-                <div class="text-stone-800 font-black text-xl">拍攝菜單 / 上傳照片</div>
-                <div class="text-stone-400 mt-2 font-bold text-xs">AI 將自動辨識價格並翻譯</div>
+                <div class="text-stone-800 font-black text-lg">拍攝菜單 / 上傳照片</div>
             </label>
-            <div id="previewArea" class="mt-8 grid grid-cols-3 gap-2"></div>
-            <button id="analyzeBtn" class="mt-8 w-full bg-[#7d968b] text-white py-5 rounded-[2rem] font-black hidden shadow-lg flex items-center justify-center gap-2">🚀 開始 AI 解析</button>
+            <div id="previewArea" class="mt-6 grid grid-cols-3 gap-2"></div>
+            <button id="analyzeBtn" class="mt-8 w-full bg-[#7d968b] text-white py-4 rounded-2xl font-black hidden shadow-lg flex items-center justify-center gap-2">🚀 開始 AI 解析</button>
         </div>
 
         <div id="mainContent" class="hidden space-y-4">
-            <div id="view-menu" class="space-y-4">
-                <div id="menuListContainer" class="flex flex-col gap-3"></div>
-                <button onclick="document.getElementById('fileInput').click()" class="w-full py-6 border-2 border-dashed border-stone-200 rounded-[2rem] text-stone-300 font-black hover:bg-white transition-all">+ 追加菜單照片</button>
+            <div id="view-menu" class="space-y-3">
+                <div id="menuListContainer" class="flex flex-col gap-2.5"></div>
+                <button onclick="document.getElementById('fileInput').click()" class="w-full py-4 border-2 border-dashed border-stone-200 rounded-[1.5rem] text-stone-300 font-black text-xs">+ 追加照片</button>
             </div>
             <div id="view-bill" class="hidden space-y-4">
-                <div class="card-pro p-6 bg-stone-50/50 flex justify-between items-center text-sm font-black">
+                <div class="card-menu bg-stone-50/50 flex justify-between items-center text-xs font-black">
                     <span>🏷️ 服務稅費加成 (%)</span>
-                    <input type="number" id="taxRateInput" value="0" onchange="updateFinanceSettings()" class="w-16 bg-white border border-stone-200 rounded-xl py-2 text-center outline-none font-black shadow-sm">
+                    <input type="number" id="taxRateInput" value="0" onchange="updateFinanceSettings()" class="w-14 bg-white border border-stone-200 rounded-lg py-1.5 text-center outline-none font-black shadow-sm">
                 </div>
-                <div id="billListContainer" class="space-y-4"></div>
+                <div id="billListContainer" class="space-y-3"></div>
             </div>
         </div>
     </main>
 
-    <div id="footerBar" class="hidden fixed bottom-8 left-5 right-5 bg-stone-900 text-white rounded-[2.5rem] p-7 z-30 flex justify-between items-center max-w-md mx-auto shadow-2xl">
-        <div>
-            <div class="text-[10px] text-stone-500 font-black tracking-widest mb-1 uppercase tracking-tighter">Grand Total</div>
-            <div class="font-black text-2xl tracking-tighter"><span id="grandTotal">0</span><span class="text-xs font-normal ml-1">元</span></div>
+    <!-- 底部總額：纖細化優化 -->
+    <div id="footerBar" class="hidden fixed bottom-6 left-4 right-4 bg-stone-900 text-white rounded-[1.5rem] p-4 z-30 flex justify-between items-center max-w-md mx-auto shadow-2xl">
+        <div class="pl-2">
+            <div class="text-[9px] text-stone-500 font-black tracking-widest uppercase mb-0.5">Total</div>
+            <div class="font-black text-xl tracking-tighter"><span id="grandTotal">0</span><span class="text-[10px] font-normal ml-0.5">元</span></div>
         </div>
-        <button onclick="openFinalModal()" class="bg-[#7d968b] px-10 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all">確認訂單</button>
+        <button onclick="openFinalModal()" class="bg-[#7d968b] px-6 py-2.5 rounded-xl font-black text-xs active:scale-95 transition-all">確認訂單</button>
     </div>
 
-    <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-5">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl p-8 text-center space-y-8">
-            <h2 class="text-2xl font-black">點餐確認清單</h2>
-            <div id="finalOrderList" class="bg-stone-50 rounded-[2rem] p-6 text-left max-h-[45vh] overflow-y-auto space-y-5 border border-stone-100 no-scrollbar"></div>
+    <!-- 點餐清單 Modal -->
+    <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-5">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-6 text-center space-y-6">
+            <h2 class="text-xl font-black">點餐確認清單</h2>
+            <!-- 修正：清單內容自動換行 -->
+            <div id="finalOrderList" class="bg-stone-50 rounded-[1.5rem] p-5 text-left max-h-[40vh] overflow-y-auto space-y-4 border border-stone-100 no-scrollbar"></div>
             <div class="flex flex-col gap-2">
-                <button onclick="copyOrderToClipboard()" class="w-full py-5 bg-stone-900 text-white rounded-2xl font-black">📋 複製內容 (LINE)</button>
-                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-2 text-stone-400 font-bold">返回修改</button>
+                <button onclick="copyOrderToClipboard()" class="w-full py-4 bg-stone-900 text-white rounded-xl font-black text-sm">📋 複製內容 (LINE)</button>
+                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-1.5 text-stone-400 font-bold text-xs">返回修改</button>
             </div>
         </div>
     </div>
@@ -188,25 +148,23 @@
 
         function getStoredApiKey() { return localStorage.getItem('gemini_api_key') || ""; }
         function setupApiKey() {
-            const key = prompt("請輸入 Gemini API Key:", getStoredApiKey());
-            if (key !== null) { localStorage.setItem('gemini_api_key', key.trim()); alert("API Key 已儲存"); }
+            const key = prompt("輸入 API Key:", getStoredApiKey());
+            if (key !== null) { localStorage.setItem('gemini_api_key', key.trim()); alert("已儲存"); }
         }
 
         function saveData() {
-            localStorage.setItem('menu_v15_items', JSON.stringify({ menuItems, restaurantInfo, taxRate, globalIdCounter }));
-            localStorage.setItem('menu_v15_friends', JSON.stringify(friends));
+            localStorage.setItem('menu_v16_items', JSON.stringify({ menuItems, restaurantInfo, taxRate, globalIdCounter }));
+            localStorage.setItem('menu_v16_friends', JSON.stringify(friends));
         }
 
         function loadData() {
-            const itemsSaved = localStorage.getItem('menu_v15_items');
-            const friendsSaved = localStorage.getItem('menu_v15_friends');
-            friends = friendsSaved ? JSON.parse(friendsSaved) : [{ id: 'share', name: '共同', cart: {} }];
-            if (itemsSaved) {
-                const data = JSON.parse(itemsSaved);
-                menuItems = data.menuItems || [];
-                restaurantInfo = data.restaurantInfo || "";
-                taxRate = data.taxRate || 0;
-                globalIdCounter = data.globalIdCounter || 0;
+            const iSaved = localStorage.getItem('menu_v16_items');
+            const fSaved = localStorage.getItem('menu_v16_friends');
+            friends = fSaved ? JSON.parse(fSaved) : [{ id: 'share', name: '共同', cart: {} }];
+            if (iSaved) {
+                const d = JSON.parse(iSaved);
+                menuItems = d.menuItems || []; restaurantInfo = d.restaurantInfo || "";
+                taxRate = d.taxRate || 0; globalIdCounter = d.globalIdCounter || 0;
                 document.getElementById('taxRateInput').value = taxRate;
                 if (menuItems.length > 0) showMainApp();
             }
@@ -223,27 +181,39 @@
         }
 
         function addFriend() {
-            const n = prompt('輸入新成員名字：');
+            const n = prompt('成員名：');
             if (n) { friends.push({ id: 'f_' + Date.now(), name: n, cart: {} }); saveData(); renderFriendList(); }
         }
 
         function removeFriend(e, id) {
             e.stopPropagation();
             if (id === 'share') return;
-            if (confirm(`確定移除此成員？`)) {
+            if (confirm(`移除成員？`)) {
                 friends = friends.filter(f => f.id !== id);
                 if (currentFriendId === id) currentFriendId = 'share';
                 saveData(); renderFriendList(); renderMenu();
             }
         }
 
+        // --- 新增：清空單一成員點餐紀錄 ---
+        function clearMemberCart(id) {
+            if (confirm("清空此人的點餐清單？")) {
+                const f = friends.find(x => x.id === id);
+                if (f) f.cart = {};
+                saveData();
+                if (currentFriendId === id) renderMenu();
+                if (!document.getElementById('view-bill').classList.contains('hidden')) renderBill();
+                updateGrandTotal();
+            }
+        }
+
         function renderFriendList() {
             const container = document.getElementById('friendListContainer');
-            container.innerHTML = `<div onclick="addFriend()" class="chip chip-unselected" style="border: 2px dashed #ddd;">＋ 新增</div>`;
+            container.innerHTML = `<div onclick="addFriend()" class="chip chip-unselected" style="border: 1.5px dashed #ddd;">＋ 新增</div>`;
             friends.forEach(f => {
-                const isActive = f.id === currentFriendId;
+                const active = f.id === currentFriendId;
                 const div = document.createElement('div');
-                div.className = `chip ${isActive ? 'chip-selected' : 'chip-unselected'}`;
+                div.className = `chip ${active ? 'chip-selected' : 'chip-unselected'}`;
                 div.innerHTML = `<span>${f.name}</span>${f.id !== 'share' ? `<span class="del-x" onclick="removeFriend(event, '${f.id}')">✕</span>` : ''}`;
                 div.onclick = () => { currentFriendId = f.id; renderFriendList(); renderMenu(); };
                 container.appendChild(div);
@@ -251,18 +221,16 @@
         }
 
         async function analyzeMenu(base64Data) {
-            const apiKey = getStoredApiKey();
-            if (!apiKey) { setupApiKey(); throw new Error("請填入 API Key"); }
+            const key = getStoredApiKey(); if (!key) { setupApiKey(); throw new Error("無 API Key"); }
             const prompt = `你是一個專業的多國語言菜單分析官。請執行：
-            1. 將辨識到的語言全部翻譯為「繁體中文」(Traditional Chinese)。
+            1. 將內容翻譯為「繁體中文」(Traditional Chinese)。
             2. 歸類「category」為：主食、飲品、小菜、甜點、或其它（繁體中文）。
-            3. 「supplementary_info」欄位：僅提取照片中關於低消、限時、服務費等實體規則，並且【絕對必須翻譯為繁體中文】。
-            4. 除了 original 欄位，其它 JSON 輸出嚴禁出現外文。若無備註則留空。
-            JSON: {"items": [{"original": "原文", "translated": "名稱", "price": 100, "category": "分類", "dietary": "禁忌", "is_recommended": boolean}], "supplementary_info": "繁體中文備註資訊"}`;
+            3. 「supplementary_info」：僅提取照片中低消、限時、規則等實體印製資訊，【必須翻譯為繁體中文】。
+            JSON: {"items": [{"original": "原文", "translated": "名稱", "price": 100, "category": "分類", "dietary": "禁忌", "is_recommended": boolean}], "supplementary_info": "繁中備註"}`;
 
             for (let model of MODEL_LIST) {
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }], generationConfig: { response_mime_type: "application/json" } })
@@ -275,13 +243,11 @@
         }
 
         document.getElementById('analyzeBtn').addEventListener('click', async function() {
-            const btn = this;
-            const files = Array.from(document.getElementById('fileInput').files);
-            btn.disabled = true; btn.innerHTML = `<div class="loader"></div> <span>AI 解析中...</span>`;
+            const btn = this; const files = Array.from(document.getElementById('fileInput').files);
+            btn.disabled = true; btn.innerHTML = `<div class="loader"></div>`;
             try {
                 for (let f of files) {
-                    const b64 = await compressImage(f);
-                    const res = await analyzeMenu(b64);
+                    const b64 = await compressImage(f); const res = await analyzeMenu(b64);
                     if (res.items) {
                         menuItems = [...menuItems, ...res.items.map(it => ({ ...it, id: 'it_' + (globalIdCounter++), price: parseFloat(it.price)||0 }))];
                         if (res.supplementary_info) restaurantInfo += (restaurantInfo ? " " : "") + res.supplementary_info;
@@ -291,31 +257,34 @@
             } catch (err) { alert(err.message); btn.disabled = false; btn.innerHTML = "🚀 開始 AI 解析"; }
         });
 
+        // --- 修正：菜單字體縮小與高密度渲染 ---
         function renderMenu() {
             const container = document.getElementById('menuListContainer');
             const catTabs = document.getElementById('categoryTabs');
             const cats = ['全部', ...new Set(menuItems.map(i => i.category || '其它'))];
-            catTabs.innerHTML = cats.map(c => `<div onclick="currentCategory='${c}'; renderMenu();" class="chip ${currentCategory === c ? 'chip-selected' : 'chip-unselected'}">${c}</div>`).join('');
+            
+            // 修正：分類選單顏色區隔 (品牌綠色)
+            catTabs.innerHTML = cats.map(c => `<div onclick="currentCategory='${c}'; renderMenu();" class="chip ${currentCategory === c ? 'cat-selected' : 'chip-unselected'}">${c}</div>`).join('');
 
             const filtered = currentCategory === '全部' ? menuItems : menuItems.filter(i => (i.category||'其它') === currentCategory);
             container.innerHTML = filtered.map(item => {
                 const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
-                return `<div class="card-pro p-6 flex flex-col gap-4">
+                return `<div class="card-menu flex flex-col gap-3">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
-                            <div class="font-black text-stone-800 text-lg leading-tight">${item.is_recommended ? '⭐ ' : ''}${item.translated}</div>
-                            <div class="text-[11px] text-stone-400 mt-1 font-bold">${item.original}</div>
-                            ${item.dietary ? `<div class="text-[10px] text-red-500 font-black mt-2 bg-red-50 inline-block px-2 py-0.5 rounded-lg">⚠️ ${item.dietary}</div>` : ''}
+                            <div class="font-black text-stone-800 text-base leading-tight">${item.is_recommended ? '⭐ ' : ''}${item.translated}</div>
+                            <div class="text-[10px] text-stone-400 mt-0.5 font-bold">${item.original}</div>
+                            ${item.dietary ? `<div class="text-[9px] text-red-500 font-bold mt-1 bg-red-50 inline-block px-1.5 py-0.5 rounded-lg">⚠️ ${item.dietary}</div>` : ''}
                         </div>
                         <div class="text-right">
-                            <div class="font-black text-[#7d968b] text-xl">${item.price}<span class="text-[10px] ml-0.5">元</span></div>
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(item.original)}&tbm=isch" target="_blank" class="text-[10px] text-stone-300 underline font-black mt-2 inline-block">🔍 搜尋圖片</a>
+                            <div class="font-black text-[#7d968b] text-lg">${item.price}<span class="text-[9px] ml-0.5 font-normal">元</span></div>
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(item.original)}&tbm=isch" target="_blank" class="text-[9px] text-stone-300 underline font-black mt-1 inline-block">🔍 圖片</a>
                         </div>
                     </div>
-                    <div class="flex justify-end items-center gap-6">
-                        <div onclick="updateCart('${item.id}', -1)" class="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 font-black text-2xl flex items-center justify-center">－</div>
-                        <span class="text-3xl font-black min-w-[2rem] text-center">${qty}</span>
-                        <div onclick="updateCart('${item.id}', 1)" class="w-12 h-12 rounded-2xl bg-[#7d968b] text-white font-black text-2xl flex items-center justify-center">＋</div>
+                    <div class="flex justify-end items-center gap-5">
+                        <div onclick="updateCart('${item.id}', -1)" class="w-10 h-10 rounded-xl bg-stone-100 text-stone-400 font-black text-xl flex items-center justify-center">－</div>
+                        <span class="text-2xl font-black min-w-[1.5rem] text-center">${qty}</span>
+                        <div onclick="updateCart('${item.id}', 1)" class="w-10 h-10 rounded-xl bg-[#7d968b] text-white font-black text-xl flex items-center justify-center">＋</div>
                     </div>
                 </div>`;
             }).join('');
@@ -328,11 +297,24 @@
                 let sub = 0, itemsHtml = '';
                 Object.entries(f.cart).forEach(([id, q]) => {
                     const it = menuItems.find(m => m.id === id);
-                    if (it) { sub += it.price * q; itemsHtml += `<div class="flex flex-col py-3 border-b border-stone-50 font-bold"><div class="flex justify-between text-sm"><span>${it.translated} x ${q}</span><span>${(it.price * q).toLocaleString()}元</span></div><div class="text-[10px] text-stone-300">${it.original}</div></div>`; }
+                    if (it) { sub += it.price * q; itemsHtml += `<div class="flex flex-col py-2.5 border-b border-stone-50 font-bold"><div class="flex justify-between text-xs"><span>${it.translated} x ${q}</span><span>${(it.price * q).toLocaleString()}元</span></div><div class="text-[9px] text-stone-300">${it.original}</div></div>`; }
                 });
                 const total = sub * (1 + taxRate / 100);
                 if (sub === 0 && f.id !== 'share') return '';
-                return `<div class="card-pro p-7"><div class="flex justify-between items-center border-b pb-5 mb-5"><div class="text-2xl font-black">${f.name}</div><div class="text-2xl font-black text-[#7d968b]">${total.toLocaleString()}元</div></div><div class="space-y-1 mb-5">${itemsHtml || '<div class="text-xs text-stone-300 text-center">尚未點餐</div>'}</div>${sub > 0 ? `<div class="bg-stone-50 p-4 rounded-2xl text-xs font-bold text-stone-400"><div class="flex justify-between"><span>小計</span><span>${sub}元</span></div><div class="flex justify-between"><span>服務稅費 (${taxRate}%)</span><span>+${(sub*taxRate/100).toFixed(0)}元</span></div></div>` : ''}</div>`;
+                return `
+                <div class="card-menu p-6 shadow-sm">
+                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="text-xl font-black">${f.name}</div>
+                            <button onclick="clearMemberCart('${f.id}')" class="p-1.5 text-red-300 hover:text-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                        <div class="text-xl font-black text-[#7d968b]">${total.toLocaleString()}元</div>
+                    </div>
+                    <div class="space-y-1 mb-4">${itemsHtml || '<div class="text-[10px] text-stone-300 text-center py-2">尚未點餐</div>'}</div>
+                    ${sub > 0 ? `<div class="bg-stone-50 p-3 rounded-xl text-[10px] font-bold text-stone-400"><div class="flex justify-between"><span>小計</span><span>${sub}元</span></div><div class="flex justify-between"><span>稅費 (${taxRate}%)</span><span>+${(sub*taxRate/100).toFixed(0)}元</span></div></div>` : ''}
+                </div>`;
             }).join('');
         }
 
@@ -347,34 +329,21 @@
             const isMenu = t === 'menu';
             document.getElementById('view-menu').classList.toggle('hidden', !isMenu);
             document.getElementById('view-bill').classList.toggle('hidden', isMenu);
-            // 切換時顯示/隱藏分類選單 (只有選菜時需要)
             document.getElementById('categoryWrapper').classList.toggle('hidden', !isMenu);
-            
-            document.getElementById('tab-menu').className = `flex-1 py-4 text-sm font-black border-b-4 ${isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
-            document.getElementById('tab-bill').className = `flex-1 py-4 text-sm font-black border-b-4 ${!isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
+            document.getElementById('tab-menu').className = `flex-1 py-3 text-xs font-black border-b-4 ${isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
+            document.getElementById('tab-bill').className = `flex-1 py-3 text-xs font-black border-b-4 ${!isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
             if (!isMenu) renderBill();
         }
 
-        function clearAllData() {
-            if (confirm("清除菜單與點餐內容？（成員清單將保留）")) {
-                menuItems = []; restaurantInfo = ""; globalIdCounter = 0;
-                friends.forEach(f => { f.cart = {}; });
-                saveData(); location.reload();
-            }
-        }
+        function clearAllData() { if (confirm("清除菜單與訂單？成員將保留。")) { menuItems = []; restaurantInfo = ""; globalIdCounter = 0; friends.forEach(f => { f.cart = {}; }); saveData(); location.reload(); } }
 
         async function compressImage(file) {
             return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height, max = 1100;
+                const img = new Image(); img.onload = () => {
+                    const canvas = document.createElement('canvas'); let w = img.width, h = img.height, max = 1100;
                     if (w > max || h > max) { if (w > h) { h *= max/w; w = max; } else { w *= max/h; h = max; } }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-                };
-                img.src = URL.createObjectURL(file);
+                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                }; img.src = URL.createObjectURL(file);
             });
         }
 
@@ -386,11 +355,11 @@
 
         function copyOrderToClipboard() {
             const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
-            let txt = "📋 點餐摘要:\n"; Object.entries(tot).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); txt += `• ${it.original} (${it.translated}) x ${q}\n`; });
-            navigator.clipboard.writeText(txt).then(() => alert("訂單內容已複製"));
+            let txt = "📋 點餐清單:\n"; Object.entries(tot).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); txt += `• ${it.original} (${it.translated}) x ${q}\n`; });
+            navigator.clipboard.writeText(txt).then(() => alert("已複製！"));
         }
 
-        // --- 修正：訂單摘要 Modal 排版優化 ---
+        // --- 修正：訂單清單 Modal 自動折行與份數大小 ---
         function openFinalModal() {
             const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
             const list = document.getElementById('finalOrderList');
@@ -399,12 +368,12 @@
             list.innerHTML = Object.entries(tot).map(([id, q]) => {
                 const it = menuItems.find(m => m.id === id);
                 return `
-                <div class="flex justify-between items-center border-b border-stone-100 pb-4 gap-4">
-                    <div class="flex-1 min-w-0"> <!-- 名稱佔據剩餘空間 -->
-                        <span class="font-black text-stone-900 block leading-tight text-lg truncate">${it.original}</span>
-                        <span class="text-[11px] text-stone-400 block mt-1 truncate">${it.translated}</span>
+                <div class="flex justify-between items-start border-b border-stone-100 pb-3 gap-3">
+                    <div class="flex-1 min-w-0">
+                        <span class="font-black text-stone-900 block leading-tight text-base break-words">${it.original}</span>
+                        <span class="text-[10px] text-stone-400 block mt-0.5 break-words">${it.translated}</span>
                     </div>
-                    <div class="text-3xl font-black text-[#7d968b] shrink-0 whitespace-nowrap"> <!-- 份數不折行、不縮小 -->
+                    <div class="text-2xl font-black text-[#7d968b] shrink-0 pt-0.5">
                         x ${q}
                     </div>
                 </div>`;
@@ -417,7 +386,7 @@
             document.getElementById('analyzeBtn').classList.remove('hidden');
             Array.from(e.target.files).forEach(f => {
                 const img = document.createElement('img'); img.src = URL.createObjectURL(f);
-                img.className = "w-full h-24 object-cover rounded-[1.5rem] border border-stone-100"; area.appendChild(img);
+                img.className = "w-full h-24 object-cover rounded-[1.5rem] border border-stone-100 shadow-sm"; area.appendChild(img);
             });
         });
 
