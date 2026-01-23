@@ -1,392 +1,1623 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅の注文 - 專業穩定版</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-        
-        * { font-family: 'Noto Sans TC', sans-serif !important; }
-
-        body { 
-            background-color: #fdfaf5; color: #333; 
-            margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; 
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-
-        /* --- 圓角膠囊按鈕 --- */
-        .chip { 
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 5px 12px !important; border-radius: 9999px !important;
-            font-weight: 700; font-size: 12px; transition: all 0.2s; border: none; cursor: pointer; white-space: nowrap;
-        }
-
-        /* 選中狀態區隔 */
-        .chip-selected { background-color: #6b7280 !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .cat-selected { background-color: #7d968b !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .chip-unselected { background-color: #f3f4f6 !important; color: #9ca3af !important; }
-
-        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 8px 0; }
-        .action-icons { display: flex; gap: 10px; align-items: center; }
-        .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; }
-
-        .del-x { margin-left: 4px; width: 14px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; }
-
-        /* 高密度菜單卡片 */
-        .card-menu { background: white; border-radius: 16px; border: 1px solid #f0f0f0; padding: 10px 14px; transition: transform 0.1s; }
-        
-        /* 加載動畫 */
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #7d968b; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body class="pb-32 overflow-x-hidden">
-
-    <!-- 頂部導覽列：成員與分類固定在頂部 -->
-    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-stone-100 shadow-sm">
-        <div class="max-w-md mx-auto px-4">
-            <div class="header-container">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-[#7d968b] rounded-xl flex items-center justify-center text-white text-lg font-black shadow-sm">L</div>
-                    <span class="text-xl font-black tracking-tighter text-stone-800">旅の注文</span>
-                </div>
-                <div class="action-icons">
-                    <button onclick="setupApiKey()" class="icon-btn text-stone-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    </button>
-                    <button onclick="clearAllData()" class="icon-btn text-red-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
-                </div>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <title>旅の冊 (Travel Log)</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <!-- 字體 -->
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+      <!-- Firebase SDK -->
+      <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+      <style>
+         :root {
+         --bg-body: #fdfcf8; --bg-card: #ffffff;
+         --theme-main: #8b5e3c; --theme-light: #f0e6dd; --theme-accent: #b08d73;
+         --text-main: #4a4036; --text-sub: #968c83;
+         --danger: #d68c8c; --link-blue: #7ca5b8;
+         }
+         body { background-color: var(--bg-body); font-family: 'Noto Sans TC', sans-serif; color: var(--text-main); margin: 0; padding: 0; -webkit-font-smoothing: antialiased; transition: background-color 0.5s ease, color 0.3s ease; }
+         .font-en { font-family: 'Montserrat', sans-serif; }
+         #google-map { width: 100%; height: 300px; border-radius: 12px; filter: sepia(10%) contrast(95%); border: 4px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; z-index: 1; }
+         .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+         /* 預設隱藏捲動軸軌道與滑塊 */
+         .custom-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+         .custom-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+         /* 當滑鼠移到該區塊（例如接駁卡片）時，才顯示捲動軸顏色 */
+         .custom-scroll:hover::-webkit-scrollbar-track { background: var(--theme-light); }
+         .custom-scroll:hover::-webkit-scrollbar-thumb { background: var(--theme-accent); }
+         .hide-scrollbar::-webkit-scrollbar { display: none; }
+         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+         button, input, select, textarea { outline: none; -webkit-tap-highlight-color: transparent; }
+         .time-select { appearance: none; background-color: transparent; text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--text-main); border-radius: 4px; padding: 0; cursor: pointer; }
+         .rotate-180 { transform: rotate(180deg); }
+         .transition-transform { transition: transform 0.3s ease; }
+         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-card); opacity: 0.95; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+         .loading-spinner { border: 4px solid var(--theme-light); border-top: 4px solid var(--theme-main); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+         .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease; }
+         .slide-enter-from, .slide-leave-to { transform: translateX(-100%); }
+         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+         .fade-enter-from, .fade-leave-to { opacity: 0; }
+         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: center; align-items: center; padding: 20px; }
+         .modal-card { background: var(--bg-card); padding: 20px; border-radius: 16px; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--theme-light); }
+         .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--theme-light); transition: transform 0.2s; }
+         .color-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+         .day-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 2px; }
+         .day-tab.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+         .color-picker-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; transition: transform 0.1s; }
+         .map-error-msg { position: absolute; inset: 0; background: #f8d7da; color: #721c24; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; font-size: 12px; z-index: 10; border-radius: 12px; }
+         .custom-checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--theme-light); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background-color: transparent; }
+         .custom-checkbox:checked { background-color: transparent; border-color: #666666; }
+         .custom-checkbox:checked::after { content: '✔'; color: #666666; font-size: 14px; font-weight: bold; }
+         .analysis-select { font-family: 'Montserrat', sans-serif !important; font-weight: 700; font-size: 10px; background-color: rgba(240, 230, 221, 0.3); border-radius: 0.5rem; padding: 0.25rem 0.5rem; outline: none; border: 1px solid var(--theme-light); color: var(--text-main); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; }
+         .packing-member-select { @apply text-[10px] font-bold bg-[var(--theme-light)]/30 rounded-lg px-2 py-1 outline-none border border-[var(--theme-light)] text-[var(--text-main)] cursor-pointer hover:bg-[var(--theme-light)]/50 transition tracking-wide; font-family: 'Montserrat', sans-serif !important; }
+         .section-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0.5rem 0.25rem; margin-bottom: 0.5rem; cursor: pointer; user-select: none; }
+         .section-title { font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; font-size: 0.75rem !important; color: var(--text-sub) !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; padding-left: 0.25rem; }
+         .section-arrow { font-size: 10px; color: var(--text-sub); transition: transform 0.3s ease; }
+         .settle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--theme-light); }
+         .settle-row:last-child { border-bottom: none; }
+         .settle-payer { flex: 1; text-align: right; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+         .settle-label { width: 40px; text-align: center; color: var(--danger); font-weight: bold; flex-shrink: 0; }
+         .settle-receiver { flex: 1; text-align: left; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+         .settle-amount { flex-shrink: 0; text-align: right; font-family: 'Montserrat', sans-serif; font-weight: bold; color: var(--theme-main); margin-left: 0.5rem; display: flex; align-items: center; gap: 4px; }
+         textarea { resize: vertical; overflow: hidden; }
+         textarea::-webkit-resizer { border-width: 8px; border-style: solid; border-color: transparent var(--theme-accent) var(--theme-accent) transparent; }
+         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+         .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
+         /* --- 新增功能：回到頂部按鈕 --- */
+         .back-to-top {
+         position: fixed;
+         right: 20px;
+         bottom: 80px; 
+         width: 45px;
+         height: 45px;
+         background-color: var(--theme-main);
+         color: white;
+         border-radius: 50%;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+         z-index: 100;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         opacity: 0;
+         pointer-events: none;
+         }
+         .back-to-top.show { opacity: 1; pointer-events: auto; }
+         .back-to-top:active { transform: scale(0.9); }
+         /* --- 新增功能：天數導航列自動捲動 --- */
+         .day-scroll-container {
+         scroll-behavior: smooth; /* 讓滾動變平滑 */
+         -webkit-overflow-scrolling: touch;
+         }
+         .day-tab {
+         scroll-snap-align: center; /* 滾動時自動對齊中心 */
+         }
+         /* --- 新增功能：連線狀態燈 --- */
+         .status-dot {
+         width: 8px;
+         height: 8px;
+         border-radius: 50%;
+         display: inline-block;
+         }
+         .status-online { background-color: #4ade80; box-shadow: 0 0 6px #4ade80; }
+         .status-offline { background-color: #f87171; box-shadow: 0 0 6px #f87171; }
+         .status-syncing { background-color: #fbbf24; animation: pulse 1s infinite; }
+         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+      </style>
+   </head>
+   <body>
+      <div id="app" :style="currentThemeStyles" class="max-w-md mx-auto bg-[var(--bg-body)] min-h-screen shadow-2xl relative pb-12 border-x border-[var(--theme-light)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-500">
+         <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="mt-2 text-xs font-bold text-[var(--theme-main)]">讀取中...</div>
+            <button @click="isLoading = false" class="mt-4 text-[10px] text-[var(--text-sub)] underline">如果卡住請點此</button>
+         </div>
+         <!-- 照片全螢幕預覽 Modal -->
+         <div v-if="previewPhotoUrl" class="modal-overlay" @click="previewPhotoUrl = null">
+            <div class="max-w-full max-h-full p-4">
+               <img :src="previewPhotoUrl" class="rounded-xl shadow-2xl max-h-[80vh] object-contain mx-auto border-4 border-white">
+               <p class="text-white text-center mt-4 text-sm font-bold">點擊任何地方關閉</p>
             </div>
-            
-            <!-- 成員列表：兩行彈性佈局 -->
-            <div class="flex flex-wrap gap-y-2 gap-x-1.5 mb-3" id="friendListContainer"></div>
-
-            <!-- 分類選單：固定在 Nav 底部 -->
-            <div id="categoryWrapper" class="hidden">
-                <div class="flex space-x-1.5 overflow-x-auto no-scrollbar pb-3" id="categoryTabs"></div>
+         </div>
+         <!-- 購物項目編輯 Modal -->
+         <!-- 口袋清單編輯 Modal -->
+         <div v-if="showWishEditModal" class="modal-overlay">
+            <div class="modal-card">
+               <h3 class="text-center font-bold text-[var(--theme-main)] mb-4">✏️ 編輯口袋清單</h3>
+               <div class="space-y-3">
+                  <!-- 1. 名稱 -->
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">名稱</label>
+                     <input v-model="editWishTemp.name" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                  </div>
+                  <!-- 2. 類別 (新增) -->
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">類別</label>
+                     <select v-model="editWishTemp.category" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                        <option value="sightseeing">📷 景點</option>
+                        <option value="food">🍴 美食</option>
+                        <option value="shopping">🛍️ 購物</option>
+                     </select>
+                  </div>
+                  <!-- 3. 預定天數 -->
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">預定天數</label>
+                     <select v-model="editWishTemp.day" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                        <option value="all">不指定日期</option>
+                        <option v-for="(day, idx) in days" :key="idx" :value="idx">Day {{ idx + 1 }}</option>
+                     </select>
+                  </div>
+                  <!-- 4. 備註 / 連結 / 地址 -->
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">詳細資訊</label>
+                     <input v-model="editWishTemp.note" placeholder="備註" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none mb-2">
+                     <input v-model="editWishTemp.address" placeholder="地址" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none mb-2">
+                     <input v-model="editWishTemp.url" placeholder="連結 URL" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                  </div>
+               </div>
+               <div class="flex gap-2 mt-6">
+                  <button @click="showWishEditModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
+                  <button @click="saveWishItemEdit" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] hover:bg-[var(--theme-accent)] rounded-lg font-bold transition">確認儲存</button>
+               </div>
             </div>
-
-            <!-- 分頁切換 -->
-            <div id="navTabs" class="hidden flex border-t border-stone-50">
-                <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-xs font-black border-b-4 border-stone-800 text-stone-800">菜單點餐</button>
-                <button onclick="switchTab('bill')" id="tab-bill" class="flex-1 py-3 text-xs font-black text-stone-300 border-b-4 border-transparent">分帳結算</button>
+         </div>
+         <!-- 行程項目編輯 Modal (新增功能) -->
+         <div v-if="showActivityEditModal" class="modal-overlay">
+            <div class="modal-card">
+               <h3 class="text-center font-bold text-[var(--theme-main)] mb-4">✏️ 編輯行程內容</h3>
+               <div class="space-y-4">
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">預定時間</label>
+                     <div class="flex items-center bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-2 py-1">
+                        <select v-model="editActivityTemp.hour" class="bg-transparent outline-none text-sm font-en">
+                           <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}</option>
+                        </select>
+                        <span class="mx-1">:</span>
+                        <select v-model="editActivityTemp.minute" class="bg-transparent outline-none text-sm font-en">
+                           <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}</option>
+                        </select>
+                     </div>
+                  </div>
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">地點名稱</label>
+                     <input v-model="editActivityTemp.place" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                  </div>
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">備註說明</label>
+                     <textarea v-model="editActivityTemp.note" rows="2" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none"></textarea>
+                  </div>
+                  <div>
+                     <label class="text-[10px] text-[var(--text-sub)] block mb-1">相關連結 (網址)</label>
+                     <input v-model="editActivityTemp.link" placeholder="https://..." class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                  </div>
+               </div>
+               <div class="flex gap-2 mt-6">
+                  <button @click="showActivityEditModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
+                  <button @click="saveActivityEdit" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] hover:bg-[var(--theme-accent)] rounded-lg font-bold transition">儲存修改</button>
+               </div>
             </div>
-        </div>
-    </nav>
-
-    <main class="max-w-md mx-auto p-4 space-y-4">
-        <!-- AI 提醒 (僅實體資訊) -->
-        <div id="restaurantInfoBox" class="hidden bg-[#fefce8] p-5 rounded-[1.5rem] border border-yellow-100 shadow-sm text-xs">
-            <div class="flex items-center gap-2 font-black text-yellow-800 mb-1">📄 菜單備註</div>
-            <div id="restaurantInfoContent" class="text-yellow-700 leading-relaxed font-medium"></div>
-        </div>
-
-        <!-- 初始上傳區域 -->
-        <div id="uploadSection" class="bg-white p-10 rounded-[2.5rem] border-2 border-dashed border-stone-200 text-center shadow-sm">
-            <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
-            <label for="fileInput" class="cursor-pointer flex flex-col items-center">
-                <div class="w-16 h-16 bg-stone-50 rounded-[1.5rem] flex items-center justify-center mb-4 text-[#7d968b]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                </div>
-                <div class="text-stone-800 font-black text-xl">點擊拍攝菜單</div>
-            </label>
-            <div id="previewArea" class="mt-6 grid grid-cols-3 gap-2"></div>
-            <button id="analyzeBtn" class="mt-8 w-full bg-[#7d968b] text-white py-4 rounded-2xl font-black hidden shadow-lg flex items-center justify-center gap-2">🚀 開始 AI 解析</button>
-        </div>
-
-        <!-- 主內容區域 -->
-        <div id="mainContent" class="hidden space-y-4">
-            <div id="view-menu" class="space-y-3">
-                <div id="menuListContainer" class="flex flex-col gap-2.5"></div>
-                <button onclick="document.getElementById('fileInput').click()" class="w-full py-4 border-2 border-dashed border-stone-200 rounded-2xl text-stone-300 font-black text-xs hover:bg-white transition-all">+ 追加菜單</button>
+         </div>
+         <!-- 行程設定 Modal -->
+         <div v-if="showSettingsModal" class="modal-overlay">
+            <div class="modal-card">
+               <h3 class="text-center font-bold text-[var(--theme-main)] mb-4">⚙️ 行程設定</h3>
+               <label class="text-xs text-[var(--text-sub)] block mb-1">旅程名稱</label>
+               <input v-model="editTemp.name" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--theme-accent)] mb-4 text-[var(--text-main)] placeholder-[var(--text-sub)]">
+               <label class="text-xs text-[var(--text-sub)] block mb-3">主題配色 (點擊預覽)</label>
+               <div class="flex justify-center gap-4 mb-6">
+                  <div v-for="(theme, key) in themePresets" :key="key" class="color-dot" :class="{ active: editTemp.theme === key }" :style="{ backgroundColor: theme['--theme-main'] }" @click="previewTheme(key)" :title="key"></div>
+               </div>
+               <div class="flex gap-2">
+                  <button @click="showSettingsModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
+                  <button @click="saveTripSettings" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] hover:bg-[var(--theme-accent)] rounded-lg font-bold transition">儲存</button>
+               </div>
             </div>
-            
-            <div id="view-bill" class="hidden space-y-4">
-                <div class="card-menu bg-stone-50/50 flex justify-between items-center text-xs font-black">
-                    <span>🏷️ 服務稅費加成 (%)</span>
-                    <input type="number" id="taxRateInput" value="0" onchange="updateFinanceSettings()" class="w-14 bg-white border border-stone-200 rounded-lg py-1.5 text-center outline-none font-black shadow-sm">
-                </div>
-                <div id="billListContainer" class="space-y-3"></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 底部導覽：精簡纖細化 -->
-    <div id="footerBar" class="hidden fixed bottom-6 left-4 right-4 bg-stone-900 text-white rounded-[1.5rem] p-4 z-30 flex justify-between items-center max-w-md mx-auto shadow-2xl">
-        <div class="pl-2">
-            <div class="text-[9px] text-stone-500 font-black tracking-widest uppercase mb-0.5 tracking-tighter">Total</div>
-            <div class="font-black text-xl tracking-tighter"><span id="grandTotal">0</span><span class="text-[10px] font-normal ml-0.5">元</span></div>
-        </div>
-        <button onclick="openFinalModal()" class="bg-[#7d968b] px-6 py-2.5 rounded-xl font-black text-xs active:scale-95 transition-all">確認訂單</button>
-    </div>
-
-    <!-- 訂單清單 Modal -->
-    <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-5">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-6 text-center space-y-6">
-            <h2 class="text-xl font-black tracking-tight">點餐確認清單</h2>
-            <div id="finalOrderList" class="bg-stone-50 rounded-[1.5rem] p-5 text-left max-h-[50vh] overflow-y-auto space-y-4 border border-stone-100 no-scrollbar"></div>
-            <div class="flex flex-col gap-2">
-                <button onclick="copyOrderToClipboard()" class="w-full py-4 bg-stone-900 text-white rounded-xl font-black text-sm">📋 複製內容 (LINE)</button>
-                <button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-full py-1.5 text-stone-400 font-bold text-xs">返回修改</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const MODEL_LIST = ["gemini-1.5-flash", "gemini-2.0-flash"];
-        const DB_KEY_ITEMS = 'travel_menu_db_items_v17';
-        const DB_KEY_FRIENDS = 'travel_menu_db_friends_v17';
-
-        let menuItems = [], friends = [];
-        let restaurantInfo = "", currentFriendId = 'share', currentCategory = '全部', globalIdCounter = 0, taxRate = 0;
-
-        function getStoredApiKey() { return localStorage.getItem('gemini_api_key') || ""; }
-        function setupApiKey() {
-            const key = prompt("輸入您的 Gemini API Key:", getStoredApiKey());
-            if (key !== null) { localStorage.setItem('gemini_api_key', key.trim()); alert("Key 已儲存"); }
-        }
-
-        function saveData() {
-            localStorage.setItem(DB_KEY_ITEMS, JSON.stringify({ menuItems, restaurantInfo, taxRate, globalIdCounter }));
-            localStorage.setItem(DB_KEY_FRIENDS, JSON.stringify(friends));
-        }
-
-        function loadData() {
-            const iSaved = localStorage.getItem(DB_KEY_ITEMS);
-            const fSaved = localStorage.getItem(DB_KEY_FRIENDS);
-            friends = fSaved ? JSON.parse(fSaved) : [{ id: 'share', name: '共同', cart: {} }];
-            if (iSaved) {
-                const d = JSON.parse(iSaved);
-                menuItems = d.menuItems || []; restaurantInfo = d.restaurantInfo || "";
-                taxRate = d.taxRate || 0; globalIdCounter = d.globalIdCounter || 0;
-                document.getElementById('taxRateInput').value = taxRate;
-                if (menuItems.length > 0) showMainApp();
-            }
-            renderFriendList();
-        }
-
-        function showMainApp() {
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('footerBar').classList.remove('hidden');
-            document.getElementById('navTabs').classList.remove('hidden');
-            document.getElementById('categoryWrapper').classList.remove('hidden');
-            renderMenu(); renderInfo();
-        }
-
-        function addFriend() {
-            const n = prompt('成員名字：');
-            if (n) { friends.push({ id: 'f_' + Date.now(), name: n, cart: {} }); saveData(); renderFriendList(); }
-        }
-
-        function removeFriend(e, id) {
-            e.stopPropagation(); if (id === 'share') return;
-            if (confirm(`確定移除此成員？`)) {
-                friends = friends.filter(f => f.id !== id);
-                if (currentFriendId === id) currentFriendId = 'share';
-                saveData(); renderFriendList(); renderMenu();
-            }
-        }
-
-        function clearMemberCart(id) {
-            if (confirm("清空此人的點餐紀錄？")) {
-                const f = friends.find(x => x.id === id); if (f) f.cart = {};
-                saveData(); renderMenu(); if (!document.getElementById('view-bill').classList.contains('hidden')) renderBill();
-                updateGrandTotal();
-            }
-        }
-
-        function renderFriendList() {
-            const container = document.getElementById('friendListContainer');
-            container.innerHTML = `<div onclick="addFriend()" class="chip chip-unselected" style="border: 1.5px dashed #ddd;">＋ 新增</div>`;
-            friends.forEach(f => {
-                const active = f.id === currentFriendId;
-                const div = document.createElement('div');
-                div.className = `chip ${active ? 'chip-selected' : 'chip-unselected'}`;
-                div.innerHTML = `<span>${f.name}</span>${f.id !== 'share' ? `<span class="del-x" onclick="removeFriend(event, '${f.id}')">✕</span>` : ''}`;
-                div.onclick = () => { currentFriendId = f.id; renderFriendList(); renderMenu(); };
-                container.appendChild(div);
-            });
-        }
-
-        // --- 加固 AI 解析功能：修復 JSON 報錯 ---
-        async function analyzeMenu(base64Data) {
-            const key = getStoredApiKey(); if (!key) { setupApiKey(); throw new Error("尚未設定 API Key"); }
-            const prompt = `你是一個專業的多國語言菜單解析助手。
-            1. 將內容翻譯為「繁體中文」(Traditional Chinese)。
-            2. 歸類「category」為：主食、飲品、小菜、甜點、或其它（繁體中文）。
-            3. 「supplementary_info」：僅提取照片中關於低消、規則等實體印製資訊，並翻譯為繁體中文。若無則留空。
-            回傳格式嚴格要求 JSON: {"items": [{"original": "原文", "translated": "名稱", "price": 100, "category": "分類", "dietary": "禁忌", "is_recommended": boolean}], "supplementary_info": "資訊"}`;
-
-            for (let model of MODEL_LIST) {
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }], generationConfig: { response_mime_type: "application/json" } })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) continue;
-
-                    // 加固處理：移除 AI 可能加入的 Markdown 語法標籤
-                    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                    rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-                    
-                    return JSON.parse(rawText);
-                } catch (e) { console.error(`模型 ${model} 報錯: `, e); }
-            }
-            throw new Error("AI 解析失敗，請確認 API Key 是否有效。");
-        }
-
-        document.getElementById('analyzeBtn').addEventListener('click', async function() {
-            const btn = this; const files = Array.from(document.getElementById('fileInput').files);
-            btn.disabled = true; btn.innerHTML = `<div class="loader"></div> <span>解析中...</span>`;
-            try {
-                for (let f of files) {
-                    const b64 = await compressImage(f); const res = await analyzeMenu(b64);
-                    if (res.items) {
-                        menuItems = [...menuItems, ...res.items.map(it => ({ ...it, id: 'it_' + (globalIdCounter++), price: parseFloat(it.price)||0 }))];
-                        if (res.supplementary_info) restaurantInfo += (restaurantInfo ? " " : "") + res.supplementary_info;
-                    }
-                }
-                saveData(); showMainApp();
-            } catch (err) { alert(err.message); btn.disabled = false; btn.innerHTML = "🚀 開始 AI 解析"; }
-        });
-
-        function renderMenu() {
-            const container = document.getElementById('menuListContainer');
-            const catTabs = document.getElementById('categoryTabs');
-            const cats = ['全部', ...new Set(menuItems.map(i => i.category || '其它'))];
-            
-            catTabs.innerHTML = cats.map(c => `<div onclick="currentCategory='${c}'; renderMenu();" class="chip ${currentCategory === c ? 'cat-selected' : 'chip-unselected'}">${c}</div>`).join('');
-
-            const filtered = currentCategory === '全部' ? menuItems : menuItems.filter(i => (i.category||'其它') === currentCategory);
-            container.innerHTML = filtered.map(item => {
-                const qty = friends.find(f => f.id === currentFriendId).cart[item.id] || 0;
-                return `<div class="card-menu flex flex-col gap-2 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="font-bold text-stone-800 text-[14px] leading-tight">${item.is_recommended ? '⭐ ' : ''}${item.translated}</div>
-                            <div class="text-[9px] text-stone-400 mt-0.5 font-bold">${item.original}</div>
-                            ${item.dietary ? `<div class="text-[8px] text-red-500 font-bold mt-1 bg-red-50 inline-block px-1.5 py-0.5 rounded-lg">⚠️ ${item.dietary}</div>` : ''}
+         </div>
+         <!-- 天數管理 Modal -->
+         <div v-if="showDayManager" class="modal-overlay">
+            <div class="modal-card !max-w-[340px]">
+               <h3 class="text-center font-bold text-[var(--theme-main)] mb-4 font-en tracking-widest text-sm">MANAGE DAYS</h3>
+               <div class="max-h-[350px] overflow-y-auto space-y-2 custom-scroll pr-2">
+                  <div v-for="(day, index) in days" :key="index" class="flex items-center gap-2 bg-[var(--bg-body)] p-2 rounded-xl border border-[var(--theme-light)]">
+                     <div class="text-[10px] font-bold w-12 text-[var(--text-sub)]">Day {{ index+1 }}</div>
+                     <div class="flex gap-1 flex-1 overflow-x-auto scrollbar-hide">
+                        <div v-for="c in dayColorPresets" :key="c" @click="day.color = c; saveData()" 
+                           :style="{ backgroundColor: c }" 
+                           :class="['color-picker-dot', (day.color === c || (!day.color && c === '#8b5e3c')) ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-60']">
                         </div>
-                        <div class="text-right shrink-0">
-                            <div class="font-black text-[#7d968b] text-[16px]">${item.price}<span class="text-[9px] ml-0.5 font-normal">元</span></div>
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(item.original)}&tbm=isch" target="_blank" class="text-[9px] text-stone-300 underline font-black mt-1 inline-block">🔍 圖片</a>
+                     </div>
+                     <div class="flex items-center bg-[var(--theme-light)]/30 rounded-lg px-1">
+                        <button @click="moveDay(index, -1)" :disabled="index === 0" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▲</button>
+                        <div class="w-px h-3 bg-[var(--theme-light)]"></div>
+                        <button @click="moveDay(index, 1)" :disabled="index === days.length - 1" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▼</button>
+                     </div>
+                  </div>
+               </div>
+               <div class="flex gap-2 mt-4">
+                  <button @click="showDayManager = false" class="flex-1 py-2 bg-[var(--theme-main)] text-white rounded-lg font-bold text-xs shadow-md">完成</button>
+               </div>
+            </div>
+         </div>
+         <!-- 側邊選單 -->
+         <transition name="slide">
+            <div v-if="showSidebar" class="fixed inset-0 z-50 flex">
+               <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="showSidebar = false"></div>
+               <div class="relative bg-[var(--bg-body)] w-72 h-full shadow-2xl flex flex-col border-r border-[var(--theme-light)]">
+                  <div class="p-5 border-b border-[var(--theme-light)]">
+                     <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-[var(--theme-main)] tracking-widest">旅程書櫃</h2>
+                        <button @click="showSidebar = false" class="text-[var(--text-sub)]">✕</button>
+                     </div>
+                     <div class="text-[10px] text-[var(--text-sub)] font-normal mt-1 opacity-70">首頁為擺放最上層旅遊書</div>
+                  </div>
+                  <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
+                     <div v-for="(trip, index) in sortedTrips" :key="trip.id" 
+                        @click="openTrip(trip.id)" 
+                        :class="currentTripId === trip.id ? 'border-[var(--theme-main)] bg-[var(--bg-card)] shadow-md' : 'border-transparent hover:bg-[var(--bg-card)] border-[var(--theme-light)]'" 
+                        class="flex items-stretch rounded-xl border bg-[var(--bg-card)] overflow-hidden transition cursor-pointer group mb-2 relative p-3">
+                        <div class="flex-1 min-w-0 pb-6">
+                           <div class="font-bold text-[var(--text-main)] text-sm truncate">{{ trip.tripName || '未命名行程' }}</div>
+                           <div class="text-[10px] text-[var(--text-sub)] mt-1 font-en">{{ trip.startDate || '無日期' }}</div>
                         </div>
-                    </div>
-                    <div class="flex justify-end items-center gap-4">
-                        <div onclick="updateCart('${item.id}', -1)" class="w-9 h-9 rounded-xl bg-stone-100 text-stone-400 font-black text-xl flex items-center justify-center active:bg-stone-200">－</div>
-                        <span class="text-2xl font-black min-w-[1.2rem] text-center">${qty}</span>
-                        <div onclick="updateCart('${item.id}', 1)" class="w-9 h-9 rounded-xl bg-[#7d968b] text-white font-black text-xl flex items-center justify-center active:opacity-80">＋</div>
-                    </div>
-                </div>`;
-            }).join('');
-            updateGrandTotal();
-        }
-
-        function renderBill() {
-            const container = document.getElementById('billListContainer');
-            container.innerHTML = friends.map(f => {
-                let sub = 0, itemsHtml = '';
-                Object.entries(f.cart).forEach(([id, q]) => {
-                    const it = menuItems.find(m => m.id === id);
-                    if (it) { sub += it.price * q; itemsHtml += `<div class="flex flex-col py-2 border-b border-stone-50 font-bold"><div class="flex justify-between text-xs"><span>${it.translated} x ${q}</span><span>${(it.price * q).toLocaleString()}元</span></div><div class="text-[9px] text-stone-300">${it.original}</div></div>`; }
-                });
-                const total = sub * (1 + taxRate / 100);
-                if (sub === 0 && f.id !== 'share') return '';
-                return `
-                <div class="card-menu p-5 shadow-sm">
-                    <div class="flex justify-between items-center border-b pb-3 mb-3">
+                        <div class="absolute bottom-2 right-2 flex items-center gap-2">
+                           <button @click.stop="openTripSettings(trip.id)" class="text-[10px] p-1 bg-white/80 rounded">⚙️</button>
+                           <button @click.stop="confirmDeleteTrip(trip.id)" class="text-[var(--danger)] p-1 bg-white/80 rounded">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                              </svg>
+                           </button>
+                        </div>
+                        <div class="w-4 bg-[var(--theme-light)]/30 border-l border-[var(--theme-light)] flex flex-col justify-center items-center gap-1">
+                           <button @click.stop="moveTripBook(index, -1)" class="text-[10px]" :disabled="index === 0">▲</button>
+                           <button @click.stop="moveTripBook(index, 1)" class="text-[10px]" :disabled="index === sortedTrips.length - 1">▼</button>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="p-4 border-t border-[var(--theme-light)]">
+                     <button @click="createNewTrip" class="w-full bg-[var(--theme-main)] text-white py-3 rounded-xl font-bold shadow-md text-sm">+ 建立新旅程</button>
+                  </div>
+               </div>
+            </div>
+         </transition>
+         <!-- Header -->
+         <div class="sticky top-0 z-30 bg-[var(--bg-body)]/95 backdrop-blur-sm border-b border-[var(--theme-light)] p-4 transition-colors">
+            <button @click="showSidebar = true" class="absolute left-4 top-5 text-[var(--theme-main)]">
+               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+               </svg>
+            </button>
+            <div class="flex items-center justify-center mb-4 pl-8 pr-8">
+               <input v-model="tripName" @change="saveData" class="text-center w-full text-xl font-bold text-[var(--theme-main)] bg-transparent border-b-2 border-transparent focus:border-[var(--theme-accent)] transition placeholder-[var(--text-sub)] py-1 tracking-widest" placeholder="旅の計画...">
+            </div>
+            <div class="flex justify-center mb-3">
+               <div class="bg-[var(--theme-light)]/30 p-1.5 rounded-full flex w-full max-w-[360px] shadow-inner gap-1 overflow-x-auto scrollbar-hide">
+                  <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id" 
+                     :class="currentTab === tab.id ? 'bg-[var(--bg-card)] text-[var(--theme-main)] shadow-sm font-bold' : 'text-[var(--text-sub)] hover:bg-white/50'" 
+                     class="flex-1 py-1.5 px-2 rounded-full text-xs transition-all duration-300 tracking-wide whitespace-nowrap">{{ tab.name }}</button>
+               </div>
+            </div>
+            <div v-if="currentTab === 'schedule'" class="flex flex-col gap-2 mt-2 px-1">
+               <div class="flex items-center justify-end px-1 gap-2">
+                  <label class="text-[10px] text-[var(--text-sub)]">出發日:</label>
+                  <input type="date" v-model="startDate" @change="saveData" class="text-[10px] bg-transparent text-[var(--theme-main)] font-en outline-none border-b border-[var(--theme-light)]">
+               </div>
+               <div class="flex items-center gap-2">
+                  <div class="flex-1 min-w-0">
+                     <div id="day-scroll-nav" class="day-scroll-container overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
+                        <div v-for="(day, index) in days" :key="index" :id="'day-tab-' + index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
+                           <div :style="{ 
+                              backgroundColor: currentDayIndex === index ? (day.color || 'var(--theme-main)') : 'var(--bg-card)', 
+                              color: currentDayIndex === index ? '#fff' : (day.color || 'var(--text-sub)'),
+                              borderColor: currentDayIndex === index ? 'transparent' : (day.color || 'var(--theme-light)') 
+                              }" 
+                              :class="['day-tab px-3 py-1.5 rounded-lg flex flex-col items-center justify-center min-w-[70px] border', currentDayIndex === index ? 'active shadow-md' : '']">
+                              <span class="text-xs font-en font-bold pointer-events-none">Day {{ index + 1 }}</span>
+                              <span class="text-[9px] font-en opacity-80 leading-none mt-0.5 pointer-events-none">{{ getDateLabel(index) }}</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="flex gap-1 mb-2">
+                     <button @click="showDayManager = true" class="shrink-0 w-8 h-8 flex items-center justify-center bg-[var(--theme-light)]/50 text-[var(--theme-main)] rounded-lg text-sm hover:bg-[var(--theme-light)] transition">⚙️</button>
+                     <button @click="addDay" class="shrink-0 w-8 h-8 flex items-center justify-center border-2 border-dashed border-[var(--theme-accent)] text-[var(--theme-main)] rounded-lg text-sm hover:bg-[var(--theme-light)] transition bg-white/50">+</button>
+                  </div>
+               </div>
+            </div>
+         </div>
+         <!-- 內容區 -->
+         <div class="p-5 min-h-[500px]">
+            <!-- PAGE 1: 行程表 -->
+            <div v-if="currentTab === 'schedule'" class="space-y-6 animate-fade">
+               <div v-if="weatherData" class="relative z-10 flex items-center justify-center gap-2 text-[var(--theme-main)] text-sm font-bold w-full mx-auto -mt-6 -mb-6 animate-fade-in bg-[var(--theme-light)]/50 backdrop-blur py-0.5 rounded-md">
+                  <span class="text-xl">{{ weatherData.icon }}</span><span>{{ weatherData.temp }}°C</span><span class="text-[var(--text-sub)] font-normal text-xs">{{ weatherData.desc }}</span>
+               </div>
+               <div class="relative group">
+                  <div id="google-map" class="bg-[var(--theme-light)] flex items-center justify-center text-[var(--theme-accent)] text-xs tracking-widest">
+                     <span v-if="mapError" class="map-error-msg">⚠️ 地圖載入失敗</span>
+                     <span v-else>MAP LOADING...</span>
+                  </div>
+                  <button @click="updateMapRoute" class="absolute bottom-4 right-4 bg-white/90 text-[var(--theme-main)] px-4 py-1.5 rounded-full shadow-md border border-[var(--theme-light)] text-[10px] font-bold tracking-wide hover:bg-[var(--theme-main)] hover:text-white transition uppercase z-20">Update Route</button>
+               </div>
+               <div class="flex justify-between items-end border-b border-[var(--theme-light)] pb-2">
+                  <h2 class="text-sm text-[var(--text-sub)] tracking-widest font-en uppercase font-bold">Day {{ currentDayIndex + 1 }} <span class="text-xs font-normal ml-1">{{ getDateLabel(currentDayIndex) }}</span></h2>
+                  <button @click="deleteDay" class="text-[10px] text-[var(--text-sub)] hover:text-[var(--danger)] transition">DELETE DAY</button>
+               </div>
+               <div v-if="days[currentDayIndex]" class="space-y-2">
+                  <template v-for="(item, index) in days[currentDayIndex].activities" :key="index">
+                     <div class="flex items-stretch gap-0 group relative bg-transparent hover:bg-[var(--bg-card)] rounded-lg transition overflow-hidden">
+                        <div class="flex-1 flex items-start gap-2 py-2 pl-2 min-w-0">
+                           <div class="flex flex-col items-center justify-start gap-1 w-20 flex-shrink-0 pt-1">
+                              <div class="flex items-center justify-center bg-[var(--bg-card)] rounded px-1 py-1 border border-[var(--theme-light)] shadow-sm w-full">
+                                 <select :value="getHour(item.time)" @change="updateTime(item, $event.target.value, 'hour')" class="time-select text-base w-7 text-[var(--theme-main)]">
+                                    <option v-for="h in hourOptions" :value="h">{{ h }}</option>
+                                 </select>
+                                 <span class="text-[var(--text-sub)] font-bold mx-0.5">:</span>
+                                 <select :value="getMinute(item.time)" @change="updateTime(item, $event.target.value, 'minute')" class="time-select text-base w-7 text-[var(--theme-main)]">
+                                    <option v-for="m in minuteOptions" :value="m">{{ m }}</option>
+                                 </select>
+                              </div>
+                              <select v-model="item.type" @change="saveData" class="appearance-none w-full text-[10px] font-bold text-center text-[var(--text-sub)] bg-transparent outline-none cursor-pointer py-1">
+                                 <option value="sightseeing">📷 景點</option>
+                                 <option value="transport">🚅 交通</option>
+                                 <option value="food">🍴 美食</option>
+                                 <option value="accommodation">🏨 住宿</option>
+                                 <option value="other">📦 其他</option>
+                              </select>
+                           </div>
+                           <div class="w-[3px] self-stretch rounded-full opacity-60 my-1 flex-shrink-0" :class="getTypeColor(item.type)"></div>
+                           <div class="flex-1 space-y-0 pb-0.5 border-b border-[var(--theme-light)] group-hover:border-transparent transition min-w-0">
+                              <div class="flex items-center gap-1 w-full">
+                                 <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="flex-1 text-base font-bold text-[var(--text-main)] placeholder-[var(--text-sub)] bg-transparent outline-none min-w-0 overflow-x-auto hide-scrollbar whitespace-nowrap">
+                                 <button @click="handleActivityLink(item)" 
+                                    class="transition p-1 flex-shrink-0"
+                                    :class="item.link ? 'text-[var(--theme-main)] scale-110' : 'text-[var(--theme-light)] hover:text-[var(--theme-accent)]'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                                       <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                                    </svg>
+                                 </button>
+                              </div>
+                              <textarea 
+                                 rows="2" 
+                                 v-model="item.note" 
+                                 @change="saveData" 
+                                 @input="autoGrow($event.target)" 
+                                 placeholder="備註..." 
+                                 class="w-full text-[10px] text-[var(--text-sub)] bg-transparent outline-none resize-none leading-snug custom-scroll overflow-hidden min-h-[48px]"
+                                 ></textarea>
+                           </div>
+                           <div class="flex flex-col gap-1 items-center justify-center self-center pr-1 flex-shrink-0 w-8">
+                              <button v-if="item.type !== 'transport'" @click="openGoogleMaps(item.place)" class="text-[var(--link-blue)] hover:text-blue-600 transition p-1">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                 </svg>
+                              </button>
+                              <button @click="deleteActivity(index)" class="text-[var(--theme-light)] hover:text-[var(--danger)] p-1 transition">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                 </svg>
+                              </button>
+                           </div>
+                        </div>
+                        <div class="w-4 border-l border-[var(--theme-light)] flex flex-col justify-between items-center bg-[var(--bg-body)] flex-shrink-0 py-1">
+                           <!-- 往上移動 -->
+                           <button @click.stop="moveActivity(index, -1)" class="w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition disabled:opacity-20 text-[10px]" :disabled="index === 0">▲</button>
+                           <!-- [新位置] 編輯按鈕 -->
+                           <button @click="openActivityEditModal(index)" class="w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition py-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                              </svg>
+                           </button>
+                           <!-- 往下移動 -->
+                           <button @click.stop="moveActivity(index, 1)" class="w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition disabled:opacity-20 text-[10px]" :disabled="index === (days[currentDayIndex].activities.length - 1)">▼</button>
+                        </div>
+                     </div>
+                     <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-12 my-0.5 flex flex-col items-start border-l-2 border-dotted border-[var(--theme-light)] pl-4 min-h-[16px] transition-all">
+                        <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition-colors py-0.5 opacity-40 hover:opacity-100 flex items-center gap-1"><span>+</span> 接駁</button>
+                        <div v-else class="w-full flex items-start gap-2 animate-fade-in pr-4 pb-1">
+                           <span class="text-xs grayscale opacity-70 shrink-0 mt-1">🚅</span>
+                           <textarea v-model="item.transportToNext" @change="saveData" rows="2" 
+                              placeholder="交通說明..." 
+                              class="flex-1 text-[10px] bg-transparent border-b border-[var(--theme-light)] outline-none focus:border-[var(--theme-accent)] text-[var(--text-sub)] placeholder-[var(--theme-light)] py-1 resize-none leading-normal overflow-y-auto custom-scroll max-h-[60px]"></textarea>
+                           <button @click="confirmDeleteTransport(item)" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
+                        </div>
+                     </div>
+                  </template>
+               </div>
+               <div v-if="days[currentDayIndex]" class="mt-8 pt-4 border-t border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-xl p-4">
+                  <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-[var(--text-sub)] tracking-widest uppercase"><span>📋 Daily Notes</span></div>
+                  <textarea v-model="days[currentDayIndex].dailyNote" @change="saveData" @input="autoGrow($event.target)" placeholder="今日的重要提醒或心得..." class="w-full text-xs text-[var(--text-main)] bg-transparent outline-none resize-y leading-relaxed min-h-[60px] custom-scroll"></textarea>
+               </div>
+               <button @click="addActivity" class="w-full py-3 border border-dashed border-[var(--theme-accent)] text-[var(--theme-accent)] rounded-xl text-xs hover:border-[var(--theme-main)] hover:text-[var(--theme-main)] transition tracking-widest mt-2 bg-[var(--bg-card)]/50">+ ADD ITEM</button>
+            </div>
+            <!-- PAGE 2: 消費紀錄 -->
+            <div v-if="currentTab === 'expenses'" class="space-y-6">
+               <div>
+                  <div @click="showRates = !showRates" class="section-header">
+                     <h3 class="section-title">EXCHANGE RATES</h3>
+                     <span class="section-arrow" :class="{'rotate-180': !showRates}">▼</span>
+                  </div>
+                  <div v-show="showRates" class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] overflow-hidden shadow-sm p-4 grid grid-cols-3 gap-3 animate-fade">
+                     <div class="space-y-1"><label class="text-[10px] text-center block font-bold text-[var(--text-sub)]">🇯🇵 JPY</label><input type="number" v-model.number="rates.JPY" @change="saveData" class="w-full text-center border-b text-sm py-1 font-en text-[var(--text-main)]" step="0.001"></div>
+                     <div class="space-y-1"><label class="text-[10px] text-center block font-bold text-[var(--text-sub)]">🇺🇸 USD</label><input type="number" v-model.number="rates.USD" @change="saveData" class="w-full text-center border-b text-sm py-1 font-en text-[var(--text-main)]" step="0.1"></div>
+                     <div class="space-y-1"><label class="text-[10px] text-center block font-bold text-[var(--text-sub)]">🇪🇺 EUR</label><input type="number" v-model.number="rates.EUR" @change="saveData" class="w-full text-center border-b text-sm py-1 font-en text-[var(--text-main)]" step="0.1"></div>
+                  </div>
+               </div>
+               <div class="grid grid-cols-1 gap-4">
+                  <div>
+                     <div @click="showAnalysis = !showAnalysis" class="section-header">
+                        <h3 class="section-title">SPENDING ANALYSIS</h3>
+                        <span class="section-arrow" :class="{'rotate-180': !showAnalysis}">▼</span>
+                     </div>
+                     <div v-show="showAnalysis" class="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--theme-light)] shadow-sm animate-fade">
+                        <div class="flex justify-between items-center mb-3 h-8 gap-2">
+                           <select v-model="analysisFilter" class="analysis-select max-w-[35%]">
+                              <option value="all">All</option>
+                              <option v-for="m in members" :key="m" :value="m">{{ m }}</option>
+                           </select>
+                           <select v-model="analysisCurrency" class="analysis-select max-w-[20%] text-right font-en">
+                              <option value="TWD">TWD</option>
+                              <option value="JPY">JPY</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                           </select>
+                        </div>
+                        <div class="relative w-full h-32 flex items-center justify-center">
+                           <canvas id="expenseChart"></canvas>
+                           <div v-if="categoryAnalysis.length === 0" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-[var(--text-sub)]">尚無消費資料</div>
+                        </div>
+                        <div class="space-y-2 mt-4">
+                           <div v-for="cat in categoryAnalysis" :key="cat.key" class="flex justify-between items-center text-xs"><span class="flex items-center gap-1.5 font-bold text-[var(--text-main)]"><span class="w-2.5 h-2.5 rounded-full" :style="{backgroundColor: cat.chartColor}"></span>{{ cat.label }}</span><span class="font-en font-bold">{{ analysisCurrency }} {{ cat.amount }} <span class="text-[10px] text-[var(--text-sub)] font-bold">({{ cat.percent }}%)</span></span></div>
+                        </div>
+                     </div>
+                  </div>
+                  <div>
+                     <div @click="showSettlement = !showSettlement" class="section-header">
+                        <h3 class="section-title">SETTLEMENT</h3>
+                        <span class="section-arrow" :class="{'rotate-180': !showSettlement}">▼</span>
+                     </div>
+                     <div v-show="showSettlement" class="bg-[var(--theme-light)]/30 p-5 rounded-xl relative overflow-hidden border border-[var(--theme-light)] animate-fade">
+                        <div class="flex justify-end mb-3">
+                           <select v-model="displayCurrency" class="text-[10px] font-bold text-[var(--wood-dark)] bg-transparent outline-none border border-[var(--theme-light)] rounded px-2 py-1 cursor-pointer hover:bg-[var(--bg-body)] transition">
+                              <option value="TWD">TWD</option>
+                              <option value="JPY">JPY</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                           </select>
+                        </div>
+                        <div class="space-y-2">
+                           <div v-for="(trans, idx) in settlementPlan" :key="idx" class="settle-row">
+                              <div class="settle-payer">{{ trans.from }}</div>
+                              <div class="settle-label">需給</div>
+                              <div class="settle-receiver">{{ trans.to }}</div>
+                              <div class="settle-amount">{{ trans.amount }}<span class="text-[var(--text-main)] ml-1 font-bold text-xs font-sans">元</span><button @click="settleDebt(trans)" class="ml-2 bg-[var(--theme-main)] text-white text-[9px] px-2 py-0.5 rounded shadow-sm hover:opacity-80 transition">結清</button></div>
+                           </div>
+                           <div v-if="settlementPlan.length === 0" class="text-center text-[10px] text-[var(--text-sub)] py-2">目前沒有需要結清的款項</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div>
+                  <div @click="showMembers = !showMembers" class="section-header">
+                     <h3 class="section-title">MEMBERS</h3>
+                     <span class="section-arrow" :class="{'rotate-180': !showMembers}">▼</span>
+                  </div>
+                  <div v-show="showMembers" class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] shadow-sm overflow-hidden animate-fade">
+                     <div v-for="(member, idx) in members" :key="idx" class="flex justify-between items-center p-3 border-b border-[var(--theme-light)] last:border-0">
                         <div class="flex items-center gap-2">
-                            <div class="text-lg font-black">${f.name}</div>
-                            <button onclick="clearMemberCart('${f.id}')" class="p-1 text-red-200 hover:text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
+                           <div class="w-2 h-2 rounded-full bg-[var(--theme-accent)] opacity-50"></div>
+                           <span class="text-sm text-[var(--text-main)] font-bold">{{ member }}</span>
                         </div>
-                        <div class="text-xl font-black text-[#7d968b]">${total.toLocaleString()}元</div>
-                    </div>
-                    <div class="space-y-1 mb-4">${itemsHtml || '<div class="text-[10px] text-stone-300 text-center py-2">尚未點餐</div>'}</div>
-                    ${sub > 0 ? `<div class="bg-stone-50 p-3 rounded-xl text-[9px] font-bold text-stone-400"><div class="flex justify-between"><span>小計</span><span>${sub}元</span></div><div class="flex justify-between"><span>稅費 (${taxRate}%)</span><span>+${(sub*taxRate/100).toFixed(0)}元</span></div></div>` : ''}
-                </div>`;
-            }).join('');
+                        <button type="button" @click.stop="removeMember(idx)" class="text-[var(--text-sub)] hover:text-[var(--danger)] px-3 py-1 cursor-pointer">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                           </svg>
+                        </button>
+                     </div>
+                     <div class="flex items-center gap-2 p-3 bg-[var(--bg-body)]"><input v-model="newMemberName" placeholder="輸入新成員..." class="bg-transparent text-sm w-full outline-none text-[var(--text-main)]"><button @click="addMember" class="text-[var(--theme-main)] text-xs font-bold px-3 py-1 bg-[var(--bg-card)] border border-[var(--theme-light)] rounded hover:bg-[var(--theme-light)] transition">ADD</button></div>
+                  </div>
+               </div>
+               <div ref="expenseForm">
+                  <div class="section-header cursor-default">
+                     <h3 class="section-title">{{ editingExpenseIndex !== null ? 'EDIT EXPENSE' : 'NEW EXPENSE' }}</h3>
+                  </div>
+                  <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] p-4 shadow-sm space-y-4">
+                     <div class="flex gap-2">
+                        <div class="relative w-1/3">
+                           <select v-model="newExpense.category" class="w-full appearance-none bg-[var(--bg-body)] border border-[var(--theme-light)] text-[var(--text-main)] text-[10px] font-bold rounded px-2 py-2 pr-6 outline-none">
+                              <option value="food">🍴 美食</option>
+                              <option value="transport">🚅 交通</option>
+                              <option value="ticket">🎫 門票</option>
+                              <option value="entertainment">🎡 娛樂</option>
+                              <option value="accommodation">🏨 住宿</option>
+                              <option value="other">📦 其他</option>
+                           </select>
+                           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-sub)] text-[10px]">▼</div>
+                        </div>
+                        <input v-model="newExpense.title" placeholder="項目名稱" class="w-2/3 text-xs font-bold border-b border-[var(--theme-light)] pb-1 focus:border-[var(--theme-main)] transition text-[var(--text-main)] bg-transparent outline-none">
+                     </div>
+                     <input v-model="newExpense.note" placeholder="備註 (選填)" class="w-full text-[10px] text-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 focus:border-[var(--theme-main)] transition bg-transparent outline-none">
+                     <div class="flex gap-2">
+                        <div class="relative w-1/3">
+                           <select v-model="newExpense.currency" class="w-full appearance-none bg-[var(--bg-body)] border border-[var(--theme-light)] text-[var(--text-main)] text-[10px] font-bold rounded px-2 py-2 pr-6 outline-none font-en">
+                              <option value="TWD">🇹🇼 TWD</option>
+                              <option value="JPY">🇯🇵 JPY</option>
+                              <option value="USD">🇺🇸 USD</option>
+                              <option value="EUR">🇪🇺 EUR</option>
+                           </select>
+                           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-sub)] text-[10px]">▼</div>
+                        </div>
+                        <input type="number" v-model.number="newExpense.amount" :readonly="splitMode === 'custom'" :class="splitMode === 'custom' ? 'bg-[var(--theme-light)]/30' : 'bg-[var(--bg-body)]'" placeholder="總金額" class="w-2/3 text-sm rounded px-3 py-2 text-[var(--text-main)] transition-colors outline-none">
+                     </div>
+                     <!-- 需求修正：增加日期編輯功能 -->
+                     <div class="flex items-center gap-2 bg-[var(--bg-body)] rounded px-2 py-1">
+                        <span class="text-xs text-[var(--text-sub)] whitespace-nowrap">日期:</span>
+                        <input type="date" v-model="newExpense.date" class="w-full text-sm bg-transparent outline-none text-[var(--text-main)] cursor-pointer">
+                     </div>
+                     <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center flex-1 gap-2 bg-[var(--bg-body)] rounded px-2 py-1">
+                           <span class="text-xs text-[var(--text-sub)] whitespace-nowrap">付款人:</span>
+                           <select v-model="newExpense.payer" class="w-full text-sm outline-none text-[var(--text-main)] bg-transparent py-1 cursor-pointer">
+                              <option value="" disabled selected>請選擇</option>
+                              <option v-for="m in members" :value="m">{{ m }}</option>
+                           </select>
+                        </div>
+                        <div class="relative flex items-center gap-2">
+                           <input type="file" ref="expensePhotoInput" @change="handlePhotoUpload" accept="image/*" class="hidden">
+                           <button @click="$refs.expensePhotoInput.click()" class="p-2 bg-[var(--theme-light)] rounded-lg text-[var(--theme-main)] hover:bg-[var(--theme-accent)] hover:text-white transition">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                              </svg>
+                           </button>
+                           <div v-if="newExpense.photo" class="relative group">
+                              <img :src="newExpense.photo" class="w-9 h-9 object-cover rounded border border-[var(--theme-light)]">
+                              <button @click="newExpense.photo = null" class="absolute -top-1 -right-1 bg-[var(--danger)] text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shadow">✕</button>
+                           </div>
+                        </div>
+                     </div>
+                     <div>
+                        <div class="flex justify-between items-end mb-2">
+                           <span class="text-[10px] text-[var(--text-sub)]">分擔方式:</span>
+                           <div class="flex gap-2 text-[10px]"><button @click="changeSplitMode('equal')" :class="splitMode === 'equal' ? 'text-[var(--theme-main)] font-bold underline' : 'text-[var(--text-sub)]'">平均分擔</button><button @click="changeSplitMode('custom')" :class="splitMode === 'custom' ? 'text-[var(--theme-main)] font-bold underline' : 'text-[var(--text-sub)]'">自訂金額</button></div>
+                        </div>
+                        <div v-if="splitMode === 'equal'" class="flex flex-wrap gap-2"><button v-for="m in members" :key="m" @click="toggleInvolved(m)" :class="newExpense.involved.includes(m) ? 'bg-[var(--theme-accent)] text-white border-[var(--theme-accent)]' : 'bg-[var(--bg-card)] text-[var(--text-sub)] border border-[var(--theme-light)]'" class="px-3 py-1 rounded-full text-xs border transition-all duration-200">{{ m }}</button></div>
+                        <div v-if="splitMode === 'custom'" class="space-y-2 bg-[var(--bg-body)] p-3 rounded-lg border border-[var(--theme-light)]">
+                           <div v-for="m in members" :key="m" class="flex items-center gap-2"><span class="text-xs text-[var(--text-main)] w-16 truncate">{{ m }}</span><input type="number" v-model.number="customSplitAmounts[m]" @input="updateTotalFromCustom" class="flex-1 bg-[var(--bg-card)] border border-[var(--theme-light)] rounded px-2 py-1 text-xs outline-none focus:border-[var(--theme-accent)] text-[var(--text-main)]" placeholder="0"></div>
+                           <div class="text-right text-[10px] text-[var(--theme-accent)]">* 總金額會自動計算</div>
+                        </div>
+                     </div>
+                     <div class="flex gap-2">
+                        <button v-if="editingExpenseIndex !== null" @click="cancelEditExpense" class="flex-1 bg-[var(--text-sub)] text-white py-2.5 rounded text-xs font-bold tracking-widest mt-2 hover:opacity-80 transition uppercase">Cancel</button>
+                        <button @click="addExpense" class="flex-[2] bg-[var(--theme-main)] text-white py-2.5 rounded text-xs font-bold tracking-widest mt-2 hover:bg-[var(--theme-accent)] transition uppercase">{{ editingExpenseIndex !== null ? 'Save Changes' : 'Save Record' }}</button>
+                     </div>
+                  </div>
+               </div>
+               <div class="pb-4">
+                  <div class="section-header cursor-default">
+                     <h3 class="section-title">HISTORY</h3>
+                  </div>
+                  <div class="space-y-4">
+                     <div v-for="(group, dateKey) in groupedExpenses" :key="dateKey">
+                        <div @click="toggleDateGroup(dateKey)" class="cursor-pointer flex items-center gap-2 text-[10px] font-bold text-[var(--text-sub)] tracking-wider mb-4 pl-1 border-b border-[var(--theme-light)] pb-1 w-fit hover:text-[var(--theme-main)] transition">{{ dateKey }} <span class="transition-transform duration-300" :class="{'rotate-180': collapsedDates[dateKey]}">▼</span></div>
+                        <div v-show="collapsedDates[dateKey]" class="space-y-2 animate-fade">
+                           <div v-for="item in group.items" :key="item.originalIndex" @click="toggleExpandHistory(item.originalIndex)" :class="isExpanded(item.originalIndex) ? 'border-[var(--theme-light)]' : 'border-transparent'" class="bg-[var(--bg-card)] p-3 rounded-lg border group hover:border-[var(--theme-accent)] transition relative cursor-pointer">
+                              <div class="flex justify-between items-start gap-3">
+                                 <div class="flex gap-3 min-w-0 flex-1">
+                                    <div class="text-xl bg-[var(--bg-body)] w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--theme-light)] shrink-0">{{ getCategoryIcon(item.data.category) }}</div>
+                                    <div class="min-w-0 flex-1">
+                                       <div class="overflow-x-auto whitespace-nowrap hide-scrollbar">
+                                          <div class="text-[var(--text-main)] text-sm font-medium leading-tight inline-block">{{ item.data.title }}</div>
+                                       </div>
+                                       <div v-if="item.data.note" class="overflow-x-auto whitespace-nowrap hide-scrollbar mt-0.5">
+                                          <div class="text-[9px] text-[var(--text-sub)] italic inline-block">{{ item.data.note }}</div>
+                                       </div>
+                                       <div class="text-[10px] text-[var(--text-sub)] mt-1 whitespace-nowrap">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div>
+                                    </div>
+                                 </div>
+                                 <div class="flex flex-col items-end shrink-0">
+                                    <div class="flex gap-1 mb-2">
+                                       <button @click.stop="editExpenseRecord(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] p-1.5 transition rounded-full bg-[var(--theme-light)]/30">
+                                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                          </svg>
+                                       </button>
+                                       <button @click.stop="deleteExpense(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-1.5 transition rounded-full bg-[var(--theme-light)]/30">
+                                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                          </svg>
+                                       </button>
+                                    </div>
+                                    <div class="flex flex-col items-end">
+                                       <div v-if="item.data.photo" @click.stop="previewPhotoUrl = item.data.photo" class="mb-1">
+                                          <img :src="item.data.photo" class="w-6 h-6 object-cover rounded shadow-sm hover:scale-110 transition border border-white">
+                                       </div>
+                                       <span class="font-en text-sm text-[var(--text-main)] font-medium">{{ item.data.currency }} {{ item.data.amount }}</span>
+                                       <span v-if="item.data.currency !== 'TWD'" class="text-[10px] text-[#dccbba] font-en whitespace-nowrap">≈ TWD {{ Math.round(item.data.amount * (rates[item.data.currency] || 1)) }}</span>
+                                    </div>
+                                 </div>
+                              </div>
+                              <div v-if="isExpanded(item.originalIndex)" class="mt-3 pt-3 border-t border-dashed border-[var(--theme-light)] bg-[var(--bg-body)] -mx-3 -mb-3 px-3 pb-3 rounded-b-lg animate-fade-in">
+                                 <p class="text-[10px] font-bold text-[var(--theme-accent)] mb-2">分擔明細:</p>
+                                 <div class="grid grid-cols-2 gap-2">
+                                    <div v-for="detail in getSplitDetails(item.data)" :key="detail.name" class="flex justify-between text-[10px] bg-[var(--bg-card)] px-2 py-1 rounded border border-[var(--theme-light)]"><span class="text-[var(--text-main)] truncate mr-1">{{ detail.name }}</span><span class="font-en text-[var(--wood-dark)]">{{ detail.amount }}</span></div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <!-- 需求修正：新增折疊式 Changelog 區塊 -->
+               <div class="mt-6 pb-10">
+                  <div @click="showChangelog = !showChangelog" class="section-header border-t border-[var(--theme-light)] pt-4">
+                     <h3 class="section-title">RECENT CHANGES (LOG)</h3>
+                     <span class="section-arrow" :class="{'rotate-180': !showChangelog}">▼</span>
+                  </div>
+                  <div v-show="showChangelog" class="bg-[var(--theme-light)]/20 rounded-xl p-3 space-y-2 animate-fade">
+                     <div v-for="(log, idx) in changelog" :key="idx" class="text-[9px] border-b border-dashed border-[var(--theme-light)] pb-1 last:border-0 flex justify-between gap-2">
+                        <span class="text-[var(--text-sub)] font-en">{{ log.time }}</span>
+                        <span class="flex-1 font-bold text-[var(--text-main)]">{{ log.action }}: {{ log.title }}</span>
+                     </div>
+                     <div v-if="changelog.length === 0" class="text-center text-[10px] text-[var(--text-sub)] py-2 italic">尚無更動紀錄</div>
+                  </div>
+               </div>
+            </div>
+            <!-- PAGE 3: 口袋清單 -->
+            <div v-if="currentTab === 'wishlist'" class="space-y-6 animate-fade">
+               <h3 class="section-title" style="padding-left:0;">POCKET LIST</h3>
+               <!-- 口袋清單地圖 -->
+               <div class="relative group">
+                  <div id="pocket-map" class="w-full h-[250px] bg-[var(--theme-light)] rounded-xl border-4 border-white shadow-md flex items-center justify-center text-[var(--theme-accent)] text-xs tracking-widest overflow-hidden">
+                     MAP LOADING...
+                  </div>
+               </div>
+               <!-- 篩選器群組容器 (透過 gap-2 縮小上下間距) -->
+               <div class="flex flex-col gap-4 -mt-2">
+                  <!-- 1. 類別篩選器 -->
+                  <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                     <button @click="wishlistFilterCategory = 'all'" 
+                        :class="wishlistFilterCategory === 'all' ? 'bg-[var(--theme-main)] text-white border-transparent' : 'bg-white text-[var(--text-sub)] border-[var(--theme-light)]'" 
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap transition-all">全部類別</button>
+                     <button @click="wishlistFilterCategory = 'sightseeing'" 
+                        :style="{ backgroundColor: wishlistFilterCategory === 'sightseeing' ? '#7ca5b8' : '#ffffff', color: wishlistFilterCategory === 'sightseeing' ? '#ffffff' : 'var(--text-sub)' }"
+                        :class="wishlistFilterCategory === 'sightseeing' ? 'border-transparent' : 'border-[var(--theme-light)]'"
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border transition-all">景點</button>
+                     <button @click="wishlistFilterCategory = 'food'" 
+                        :style="{ backgroundColor: wishlistFilterCategory === 'food' ? '#f87171' : '#ffffff', color: wishlistFilterCategory === 'food' ? '#ffffff' : 'var(--text-sub)' }"
+                        :class="wishlistFilterCategory === 'food' ? 'border-transparent' : 'border-[var(--theme-light)]'"
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border transition-all">美食</button>
+                     <button @click="wishlistFilterCategory = 'shopping'" 
+                        :style="{ backgroundColor: wishlistFilterCategory === 'shopping' ? '#8ab8a8' : '#ffffff', color: wishlistFilterCategory === 'shopping' ? '#ffffff' : 'var(--text-sub)' }"
+                        :class="wishlistFilterCategory === 'shopping' ? 'border-transparent' : 'border-[var(--theme-light)]'"
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border transition-all">購物</button>
+                  </div>
+                  <!-- 2. 天數篩選器 -->
+                  <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                     <button @click="wishlistFilterDay = 'all'" 
+                        :class="wishlistFilterDay === 'all' ? 'bg-[var(--theme-main)] text-white border-transparent' : 'bg-white text-[var(--text-sub)] border-[var(--theme-light)]'" 
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap transition-all">全部天數</button>
+                     <button v-for="(day, idx) in days" :key="idx" @click="wishlistFilterDay = idx" 
+                        :class="wishlistFilterDay === idx ? 'bg-[var(--theme-main)] text-white border-transparent' : 'bg-white text-[var(--text-sub)] border-[var(--theme-light)]'" 
+                        class="px-4 py-1.5 rounded-full text-[10px] font-bold border whitespace-nowrap transition-all">Day {{ idx + 1 }}</button>
+                  </div>
+               </div>
+               <div class="space-y-3">
+                  <div v-for="(item, idx) in paginatedWishlist" :key="idx" class="bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--theme-light)] shadow-sm relative group">
+                     <div class="flex items-start gap-3 pr-16">
+                        <input type="checkbox" v-model="item.checked" @change="saveData" class="custom-checkbox flex-shrink-0 mt-1">
+                        <div class="flex-1 min-w-0 transition-opacity duration-300" :class="{'opacity-40': item.checked}">
+                           <div class="flex items-center gap-2 mb-1 w-full">
+                              <div class="overflow-x-auto whitespace-nowrap hide-scrollbar flex-1 flex items-center gap-2">
+                                 <!-- 顯示類別圖示 -->
+                                 <span class="text-xs">{{ item.category === 'sightseeing' ? '📷' : (item.category === 'shopping' ? '🛍️' : '🍴') }}</span>
+                                 <!-- 標題名稱：點擊後地圖會跳轉到該地點 -->
+                                 <div @click="focusOnPocketMarker(item)" class="font-bold text-[var(--text-main)] text-sm inline-block cursor-pointer hover:text-[var(--theme-main)] transition-colors overflow-x-auto hide-scrollbar whitespace-nowrap max-w-full">
+                                    {{ item.name }}
+                                 </div>
+                                 <!-- 超連結：只有點擊 🔗 圖示才會跳轉網址 -->
+                                 <a v-if="item.url" :href="item.url" target="_blank" 
+                                    class="text-[10px] ml-1 p-1 bg-[var(--theme-light)]/50 rounded hover:bg-[var(--theme-light)] transition">
+                                 🔗
+                                 </a>
+                              </div>
+                           </div>
+                           <div v-if="item.note" class="text-xs text-[var(--text-sub)] mb-1">{{ item.note }}</div>
+                           <div v-if="item.address" class="flex items-center gap-1 mt-1" @click.stop="openGoogleMaps(item.address)"><span class="text-[var(--link-blue)] text-xs">📍</span><span class="text-[10px] text-[var(--text-sub)] truncate max-w-[200px] hover:text-[var(--theme-main)] cursor-pointer">{{ item.address }}</span></div>
+                        </div>
+                     <div v-if="item.day !== undefined && item.day !== 'all'" class="absolute top-2 right-12 text-[9px] px-1.5 py-0.5 bg-[var(--theme-light)] text-[var(--theme-main)] rounded font-bold shadow-sm">
+    D{{ item.day + 1 }}
+</div>
+                     </div>
+                     <div class="absolute inset-y-0 right-0 flex flex-col justify-center items-center gap-1 w-10 border-l border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-r-xl">
+    <button @click="openWishEditModal(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] p-2 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg>
+    </button>
+    <button @click.stop="deleteWishItem(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-2 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+    </button>
+</div>
+                  </div>
+               </div>
+               <!-- 修改後的新增項目區 -->
+               <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] p-4 shadow-sm space-y-3 mt-4">
+                  <div class="flex justify-between items-center">
+                     <h4 class="text-xs font-bold text-[var(--text-main)]">新增口袋地點</h4>
+                     <div class="flex gap-1">
+                        <select v-model="newWishItem.category" class="text-[10px] font-bold bg-[var(--bg-body)] border border-[var(--theme-light)] rounded px-2 py-1 text-[var(--theme-main)]">
+                           <option value="sightseeing">📷 景點</option>
+                           <option value="food">🍴 美食</option>
+                           <option value="shopping">🛍️ 購物</option>
+                        </select>
+                        <select v-model="newWishItem.day" class="text-[10px] font-bold bg-[var(--bg-body)] border border-[var(--theme-light)] rounded px-2 py-1 text-[var(--theme-main)]">
+                           <option value="all">不指定日期</option>
+                           <option v-for="(day, idx) in days" :key="idx" :value="idx">D{{ idx + 1 }}</option>
+                        </select>
+                     </div>
+                  </div>
+                  <input v-model="newWishItem.name" placeholder="地點名稱" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 bg-transparent">
+                  <input v-model="newWishItem.note" placeholder="備註" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 bg-transparent">
+                  <input v-model="newWishItem.address" @focus="initPocketAutocomplete" placeholder="地址 (點擊可自動完成)" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 bg-transparent">
+                  <input v-model="newWishItem.url" placeholder="連結 URL" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 bg-transparent">
+                  <button @click="addWishItem" class="w-full bg-[var(--theme-main)] text-white py-2.5 rounded text-xs font-bold tracking-widest hover:bg-[var(--theme-accent)] transition">ADD TO POCKET</button>
+               </div>
+            </div>
+            <!-- PAGE 4: 常用連結 -->
+            <div v-if="currentTab === 'links'" class="space-y-6">
+               <h3 class="section-title" style="padding-left:0;">CLOUD & LINKS</h3>
+               <div class="space-y-3">
+                  <a v-for="(link, idx) in externalLinks" :key="idx" :href="link.url" target="_blank" class="block bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--theme-light)] hover:border-[var(--theme-accent)] transition shadow-sm group relative flex items-center gap-3">
+                     <div class="text-2xl bg-[var(--bg-body)] w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--theme-light)] shrink-0">🔗</div>
+                     <div class="flex-1 min-w-0">
+                        <div class="text-[var(--text-main)] font-bold text-sm truncate">{{ link.title }}</div>
+                        <div class="text-[10px] text-[var(--text-sub)] truncate">{{ link.url }}</div>
+                     </div>
+                     <button @click.prevent="deleteLink(idx)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-2 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                     </button>
+                  </a>
+                  <div v-if="externalLinks.length === 0" class="text-center text-[var(--text-sub)] text-xs py-10 border-2 border-dashed border-[var(--theme-light)] rounded-xl">尚未新增連結</div>
+               </div>
+               <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] p-4 shadow-sm space-y-3 mt-4">
+                  <h4 class="text-xs font-bold text-[var(--text-main)]">新增連結</h4>
+                  <input v-model="newLink.title" placeholder="標題" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent outline-none">
+                  <input v-model="newLink.url" placeholder="網址 (https://...)" class="w-full text-sm border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent outline-none">
+                  <button @click="addLink" class="w-full bg-[var(--theme-main)] text-white py-2.5 rounded text-xs font-bold tracking-widest mt-2 hover:bg-[var(--theme-accent)] transition">ADD LINK</button>
+               </div>
+            </div>
+            <!-- PAGE 5: 行李清單 -->
+            <div v-if="currentTab === 'packing'" class="space-y-6">
+               <div class="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--theme-light)] shadow-sm">
+                  <div class="flex justify-between items-center mb-3">
+                     <h3 class="section-title" style="padding-left:0;">PACKING PROGRESS</h3>
+                     <select v-model="currentPackingMember" class="packing-member-select max-w-[40%]">
+                        <option v-for="m in members" :key="m" :value="m">{{ m }}</option>
+                     </select>
+                  </div>
+                  <div class="flex justify-between items-end mb-1"><span class="text-[10px] font-bold text-[var(--text-main)]">{{ currentPackingMember }} 的清單</span><span class="text-[10px] font-en font-bold text-[var(--theme-main)]">{{ packingProgress }}%</span></div>
+                  <div class="h-2 w-full bg-[var(--theme-light)] rounded-full overflow-hidden">
+                     <div class="h-full bg-[var(--theme-accent)] transition-all duration-500" :style="{ width: packingProgress + '%' }"></div>
+                  </div>
+               </div>
+               <div class="space-y-2">
+                  <div v-for="(item, idx) in currentPackingList" :key="idx" class="flex items-center gap-3 bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--theme-light)] group">
+                     <input type="checkbox" v-model="item.checked" @change="saveData" class="custom-checkbox flex-shrink-0"><input v-model="item.name" @change="saveData" class="flex-1 bg-transparent outline-none text-sm font-bold text-[var(--text-main)] transition-all" :class="{'opacity-50': item.checked}">
+                     <button @click="deletePackingItem(idx)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        </svg>
+                     </button>
+                  </div>
+                  <div v-if="currentPackingList.length === 0" class="text-center py-10 border-2 border-dashed border-[var(--theme-light)] rounded-xl">
+                     <p class="text-[var(--text-sub)] text-xs mb-3">此成員清單是空的</p>
+                     <button @click="loadDefaultPackingItems" class="text-[var(--theme-main)] text-xs font-bold px-3 py-1.5 bg-[var(--bg-body)] border border-[var(--theme-light)] rounded hover:bg-[var(--theme-light)] transition tracking-wider">📋 載入建議清單</button>
+                  </div>
+               </div>
+               <div class="flex gap-2 mt-4"><input v-model="newPackingItem" @keyup.enter="addPackingItem" placeholder="物品名稱..." class="flex-1 bg-[var(--bg-card)] border border-[var(--theme-light)] rounded-lg px-3 py-2.5 text-sm outline-none text-[var(--text-main)]"><button @click="addPackingItem" class="bg-[var(--theme-main)] text-white px-4 rounded-lg font-bold shadow-md hover:bg-[var(--theme-accent)] transition text-xs">ADD</button></div>
+            </div>
+         </div>
+         <!-- 回到頂部按鈕 -->
+         <div @click="scrollToTop" :class="['back-to-top', { 'show': showBackToTop }]">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+         </div>
+         <div class="fixed bottom-0 w-full bg-[var(--bg-body)]/90 backdrop-blur border-t border-[var(--theme-light)] p-2 text-center text-[10px] text-[var(--text-sub)] font-en tracking-widest z-40 flex items-center justify-center gap-2">
+            <span :class="['status-dot', isOnline ? (isSyncing ? 'status-syncing' : 'status-online') : 'status-offline']"></span>
+            {{ isOnline ? (isSyncing ? 'SYNCING...' : statusMessage) : 'OFFLINE MODE' }}
+         </div>
+      </div>
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCv9tkLUA9T3lYlz6JLf_wuWFAZLR2nRHY&libraries=places"></script>
+      <script>
+         const { createApp } = Vue;
+         const firebaseConfig = { apiKey: "AIzaSyACnUlpKnoImSKhnmEDLAwKfuUOXAKijrU", authDomain: "mytrip-cf4ce.firebaseapp.com", databaseURL: "https://mytrip-cf4ce-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mytrip-cf4ce", storageBucket: "mytrip-cf4ce.firebasestorage.app", messagingSenderId: "336541146264", appId: "1:336541146264:web:484f98b025c151a1e244ed" };
+         const hasFirebase = true; 
+         let db = null;
+         if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) {} }
+         
+         createApp({
+             data() {
+                 return {
+                     isLoading: true,showBackToTop: false, isOnline: navigator.onLine, isSyncing: false, showSidebar: false, currentTab: 'schedule', 
+                     tabs: [{id:'schedule', name:'行程表'}, {id:'expenses', name:'消費紀錄'}, {id:'wishlist', name:'口袋清單'}, {id:'links', name:'常用連結'}, {id:'packing', name:'行李清單'}],
+                     tripName: '', statusMessage: 'Connecting...', currentDayIndex: 0, startDate: '',
+                     days: [{ activities: [], dailyNote: '', color: '' }],
+                     members: ['我', '旅伴'], newMemberName: '',
+                     showRates: false, displayCurrency: 'TWD', analysisCurrency: 'TWD',
+                     analysisFilter: 'all', rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
+                     expenses: [], splitMode: 'equal', customSplitAmounts: {},
+                     editingExpenseIndex: null, previewPhotoUrl: null,
+                     newExpense: { title: '', amount: '', payer: '', currency: 'TWD', involved: ['我', '旅伴'], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '', date: new Date().toISOString().split('T')[0] },
+                     externalLinks: [], newLink: { title: '', url: '' },
+                     wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all', category: 'food' },
+                     wishlistFilterDay: 'all', wishlistPage: 1, wishlistItemsPerPage: 10,
+                     wishlistFilterCategory: 'all', pocketMap: null, pocketMarkers: [],
+                     showWishEditModal: false, editingWishIdx: null, editWishTemp: { name: '', day: 'all', note: '', url: '', address: '', category: 'food'  },
+                     showActivityEditModal: false,
+                     editingActivityIdx: null,
+                     editActivityTemp: { hour: '10', minute: '00', place: '', note: '', link: '' },
+                     showAnalysis: true, showSettlement: true, showMembers: false, collapsedDates: {},
+                     packingList: {}, newPackingItem: '', currentPackingMember: '',
+                     mapError: false, weatherStatus: 'loading', 
+                     hourOptions: Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')),
+                     minuteOptions: Array.from({length: 12}, (_, i) => (i * 5).toString().padStart(2, '0')),
+                     expandedHistoryIndices: [], allTrips: {}, currentTripId: null,
+                     showSettingsModal: false, editTemp: { name: '', theme: 'wood' }, pendingTripId: null,
+                     showDayManager: false, 
+                     dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e', '#b08d73', '#7ca5b8', '#d68c8c', '#9ea6b3'],
+                     weatherData: null, chartInstance: null, isMapUpdating: false, localOrder: [],
+                     showChangelog: false, changelog: [],saveTimer: null,
+                     themePresets: { wood: { '--bg-body': '#fdfcf8', '--bg-card': '#ffffff', '--theme-main': '#8b5e3c', '--theme-light': '#f0e6dd', '--theme-accent': '#b08d73', '--text-main': '#4a4036', '--text-sub': '#968c83', '--danger': '#d68c8c', '--link-blue': '#7ca5b8' }, sakura: { '--bg-body': '#fff5f7', '--bg-card': '#ffffff', '--theme-main': '#d65d7a', '--theme-light': '#ffe4e8', '--theme-accent': '#f4a6b5', '--text-main': '#5c3a41', '--text-sub': '#9e7e85', '--danger': '#ff6b6b', '--link-blue': '#7ca5b8' }, ocean: { '--bg-body': '#f0f8ff', '--bg-card': '#ffffff', '--theme-main': '#4a7a8c', '--theme-light': '#dcedf5', '--theme-accent': '#7fb0c2', '--text-main': '#2c3e50', '--text-sub': '#7f8c8d', '--danger': '#e74c3c', '--link-blue': '#7ca5b8' }, matcha: { '--bg-body': '#f6f9f6', '--bg-card': '#ffffff', '--theme-main': '#5e7e5e', '--theme-light': '#ddeedd', '--theme-accent': '#8daf8d', '--text-main': '#2d382d', '--text-sub': '#889988', '--danger': '#c45c5c', '--link-blue': '#7ca5b8' }, night: { '--bg-body': '#1a1a1a', '--bg-card': '#2a2a2a', '--theme-main': '#e0e0e0', '--theme-light': '#444444', '--theme-accent': '#666666', '--text-main': '#e0e0e0', '--text-sub': '#999999', '--danger': '#ff5555', '--link-blue': '#7ca5b8' } }
+                 }
+             },
+             watch: {
+                 // 1. 監控口袋名單變動（地圖自動標點）
+                 filteredWishlist: {
+                     handler() { 
+                         if(this.currentTab === 'wishlist') {
+                             this.updatePocketMapMarkers(); 
+                         }
+                     },
+                     deep: true
+                 },
+                 // 2. 監控分頁切換
+                 currentTab(newVal) { 
+                     if (newVal === 'wishlist') {
+                         this.$nextTick(() => { this.initPocketMap(); });
+                     } else if (newVal === 'schedule') { 
+                         this.$nextTick(() => { this.retryInitMap(0); }); 
+                     } else if (newVal === 'expenses') { 
+                         this.$nextTick(() => { this.renderChart(); }); 
+                     } 
+                 },
+                 // 3. 原有監控 (分析、成員、同步順序)
+                 analysisCurrency() { if(this.currentTab === 'expenses') this.renderChart(); },
+                 analysisFilter() { if(this.currentTab === 'expenses') this.renderChart(); },
+                 expenses: { handler() { if(this.currentTab === 'expenses') this.renderChart(); }, deep: true },
+                 members(newVal) { if (newVal.length > 0 && !newVal.includes(this.currentPackingMember)) { this.currentPackingMember = newVal[0]; } newVal.forEach(m => { if (!this.packingList[m]) this.packingList[m] = []; }); },
+                 allTrips: { handler() { this.syncLocalOrder(); }, deep: true }
+             },
+             computed: {
+                 filteredWishlist() {
+                 let list = this.wishlist.map((item, index) => ({ ...item, originalIndex: index }));
+                 // 篩選天數
+                 if (this.wishlistFilterDay !== 'all') { list = list.filter(item => item.day === this.wishlistFilterDay); }
+                 // 篩選類別
+                 if (this.wishlistFilterCategory !== 'all') { list = list.filter(item => item.category === this.wishlistFilterCategory); }
+                 return list;
+             },
+                 paginatedWishlist() { const start = (this.wishlistPage - 1) * this.wishlistItemsPerPage; return this.filteredWishlist.slice(start, start + this.wishlistItemsPerPage); },
+                 totalWishlistPages() { return Math.ceil(this.filteredWishlist.length / this.wishlistItemsPerPage) || 1; },
+                 currentPackingList() { return this.packingList[this.currentPackingMember] || []; },
+                 packingProgress() { const list = this.currentPackingList; if (list.length === 0) return 0; const checkedCount = list.filter(i => i.checked).length; return Math.round((checkedCount / list.length) * 100); },
+                 currentThemeStyles() { const trip = this.allTrips[this.currentTripId]; const themeKey = (trip && trip.theme) ? trip.theme : 'wood'; return this.themePresets[themeKey] || this.themePresets['wood']; },
+                 sortedTrips() { 
+                     if (!this.allTrips || Object.keys(this.allTrips).length === 0) return []; 
+                     let trips = Object.keys(this.allTrips).map(key => ({ id: key, ...this.allTrips[key] })); 
+                     trips.sort((a, b) => { 
+                         const indexA = this.localOrder.indexOf(a.id); 
+                         const indexB = this.localOrder.indexOf(b.id); 
+                         return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB); 
+                     }); 
+                     return trips; 
+                 },
+                 categoryAnalysis() { return this.calcAnalysis(); },
+                 groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
+                 settlementPlan() {
+                     if (!this.members.length) return [];
+                     let balances = {};
+                     this.members.forEach(m => balances[m] = 0);
+         
+                     this.expenses.forEach(exp => {
+                         const rate = parseFloat(this.rates[exp.currency] || 1);
+                         const payer = exp.payer;
+                         const totalAmount = parseFloat(exp.amount || 0);
+         
+                         // 1. 付款人得到 Credit (需在目前的成員名單中)
+                         if (this.members.includes(payer)) {
+                             balances[payer] += totalAmount * rate;
+                         }
+         
+                         // 2. 參與者扣除 Debit
+                         if (exp.splitType === 'custom' && exp.customData) {
+                             for (let m in exp.customData) {
+                                 if (this.members.includes(m)) {
+                                     balances[m] -= (parseFloat(exp.customData[m]) || 0) * rate;
+                                 }
+                             }
+                         } else {
+                             // 平均分擔模式：僅計算目前還在名單內的參與人
+                             let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                             if (involved.length > 0) {
+                                 let splitTWD = (totalAmount * rate) / involved.length;
+                                 involved.forEach(m => {
+                                     balances[m] -= splitTWD;
+                                 });
+                             }
+                         }
+                     });
+         
+                     // 2. 媒合債務（以 TWD 為基礎運算）
+                     let debtors = [];
+                     let creditors = [];
+                     const epsilon = 0.1; // 忽略極小誤差
+         
+                     for (let m of this.members) {
+                         let amt = balances[m];
+                         if (amt < -epsilon) debtors.push({ name: m, amount: Math.abs(amt) });
+                         else if (amt > epsilon) creditors.push({ name: m, amount: amt });
+                     }
+         
+                     let transactions = [];
+                     let i = 0, j = 0;
+                     while (i < debtors.length && j < creditors.length) {
+                         let debtor = debtors[i], creditor = creditors[j];
+                         let amountTWD = Math.min(debtor.amount, creditor.amount);
+                         
+                         const targetDisplayRate = parseFloat(this.rates[this.displayCurrency] || 1);
+                         transactions.push({ 
+                             from: debtor.name, 
+                             to: creditor.name, 
+                             amount: Math.round(amountTWD / targetDisplayRate)
+                         });
+         
+                         debtor.amount -= amountTWD;
+                         creditor.amount -= amountTWD;
+         
+                         if (debtor.amount <= epsilon) i++;
+                         if (creditor.amount <= epsilon) j++;
+                     }
+                     return transactions;
+                 }
+             },
+             mounted() { 
+                 this.loadTripList(); 
+                 setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); 
+                 
+                 // 修正：將監聽器放在 mounted 內部
+                 window.addEventListener('scroll', () => {
+                     this.showBackToTop = window.scrollY > 300;
+                 });
+                 window.addEventListener('online', () => { this.isOnline = true; });
+                 window.addEventListener('offline', () => { this.isOnline = false; });
+             },
+             methods: {initPocketMap() {
+                 const el = document.getElementById("pocket-map");
+                 if (!el) return;
+                 try {
+                     this.pocketMap = new google.maps.Map(el, {
+                         zoom: 12, center: { lat: 35.68, lng: 139.76 },
+                         disableDefaultUI: true,
+                         gestureHandling: 'greedy', // 讓單指可以拖動
+                         styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
+                     });
+                     this.updatePocketMapMarkers();
+                 } catch (e) { console.error("Pocket Map Error", e); }
+             },
+             async updatePocketMapMarkers() {
+    if (!this.pocketMap) return;
+    this.pocketMarkers.forEach(m => m.setMap(null));
+    this.pocketMarkers = [];
+
+    const geocoder = new google.maps.Geocoder();
+    const bounds = new google.maps.LatLngBounds();
+    let hasPoints = false;
+
+    const colors = { sightseeing: '#7ca5b8', food: '#f87171', shopping: '#8ab8a8' };
+
+    for (let item of this.filteredWishlist) {
+        if (!item.address && (!item.lat || !item.lng)) continue;
+
+        let pos = null;
+
+        // 核心優化：如果原本就有座標，直接用
+        if (item.lat && item.lng) {
+            pos = { lat: item.lat, lng: item.lng };
+        } else if (item.address) {
+            // 沒有座標才去解析，並解析後存起來
+            await this.sleep(200);
+            try {
+                const res = await this.geocodePromise(geocoder, item.address);
+                if (res && res[0]) {
+                    const loc = res[0].geometry.location;
+                    item.lat = loc.lat();
+                    item.lng = loc.lng();
+                    pos = loc;
+                    this.saveData(); // 存到雲端避免下次再噴 API
+                }
+            } catch (e) {}
         }
 
-        function updateGrandTotal() {
-            let t = 0; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); if (it) t += it.price * q; }); });
-            document.getElementById('grandTotal').innerText = (t * (1 + taxRate / 100)).toLocaleString();
-        }
-
-        function updateFinanceSettings() { taxRate = parseFloat(document.getElementById('taxRateInput').value) || 0; saveData(); updateGrandTotal(); if (!document.getElementById('view-bill').classList.contains('hidden')) renderBill(); }
-
-        function switchTab(t) {
-            const isMenu = t === 'menu';
-            document.getElementById('view-menu').classList.toggle('hidden', !isMenu);
-            document.getElementById('view-bill').classList.toggle('hidden', isMenu);
-            document.getElementById('categoryWrapper').classList.toggle('hidden', !isMenu);
-            document.getElementById('tab-menu').className = `flex-1 py-3 text-xs font-black border-b-4 ${isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
-            document.getElementById('tab-bill').className = `flex-1 py-3 text-xs font-black border-b-4 ${!isMenu ? 'border-stone-800 text-stone-800' : 'border-transparent text-stone-300'}`;
-            if (!isMenu) renderBill();
-        }
-
-        function clearAllData() { if (confirm("清除菜單？（成員名字將保留）")) { menuItems = []; restaurantInfo = ""; globalIdCounter = 0; friends.forEach(f => f.cart = {}); saveData(); location.reload(); } }
-
-        async function compressImage(file) {
-            return new Promise(resolve => {
-                const img = new Image(); img.onload = () => {
-                    const canvas = document.createElement('canvas'); let w = img.width, h = img.height, max = 1100;
-                    if (w > max || h > max) { if (w > h) { h *= max/w; w = max; } else { w *= max/h; h = max; } }
-                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-                }; img.src = URL.createObjectURL(file);
+        if (pos) {
+            const marker = new google.maps.Marker({
+                position: pos,
+                map: this.pocketMap,
+                title: item.name,
+                pocketItemIndex: item.originalIndex,
+                icon: {
+                    path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                    fillColor: colors[item.category] || '#999999',
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: '#FFFFFF',
+                    scale: 1.5,
+                    anchor: new google.maps.Point(12, 22)
+                }
             });
+            this.pocketMarkers.push(marker);
+            bounds.extend(pos);
+            hasPoints = true;
         }
-
-        function updateCart(itemId, delta) {
-            const f = friends.find(f => f.id === currentFriendId);
-            const n = (f.cart[itemId] || 0) + delta;
-            if (n >= 0) { if (n === 0) delete f.cart[itemId]; else f.cart[itemId] = n; saveData(); renderMenu(); }
+    }
+    if (hasPoints) {
+        if (this.pocketMarkers.length === 1) {
+            this.pocketMap.setCenter(this.pocketMarkers[0].getPosition());
+            this.pocketMap.setZoom(16);
+        } else {
+            this.pocketMap.fitBounds(bounds);
         }
-
-        function copyOrderToClipboard() {
-            const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
-            let txt = "📋 點餐摘要:\n"; Object.entries(tot).forEach(([id, q]) => { const it = menuItems.find(m => m.id === id); txt += `• ${it.original} (${it.translated}) x ${q}\n`; });
-            navigator.clipboard.writeText(txt).then(() => alert("已複製！"));
-        }
-
-        function openFinalModal() {
-            const tot = {}; friends.forEach(f => { Object.entries(f.cart).forEach(([id, q]) => { tot[id] = (tot[id] || 0) + q; }); });
-            const list = document.getElementById('finalOrderList');
-            if (Object.keys(tot).length === 0) return;
-            list.innerHTML = Object.entries(tot).map(([id, q]) => {
-                const it = menuItems.find(m => m.id === id);
-                return `<div class="flex justify-between items-start border-b border-stone-100 pb-3 gap-3">
-                    <div class="flex-1 min-w-0"><span class="font-black text-stone-900 block leading-tight text-[15px] break-words">${it.original}</span><span class="text-[10px] text-stone-400 block mt-0.5 break-words">${it.translated}</span></div>
-                    <div class="text-2xl font-black text-[#7d968b] shrink-0 pt-0.5 tracking-tighter">x ${q}</div>
-                </div>`;
-            }).join('');
-            document.getElementById('orderModal').classList.remove('hidden');
-        }
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const area = document.getElementById('previewArea'); area.innerHTML = '';
-            document.getElementById('analyzeBtn').classList.remove('hidden');
-            Array.from(e.target.files).forEach(f => {
-                const img = document.createElement('img'); img.src = URL.createObjectURL(f);
-                img.className = "w-full h-24 object-cover rounded-[1.5rem] border border-stone-100 shadow-sm"; area.appendChild(img);
-            });
+    }
+},
+             initPocketAutocomplete(event) {
+    const input = event.target;
+    if (input.dataset.autocompleteInit) return;
+    try {
+        const auto = new google.maps.places.Autocomplete(input);
+        auto.addListener('place_changed', () => {
+            const place = auto.getPlace();
+            if (place.geometry) {
+                const loc = place.geometry.location;
+                this.newWishItem.address = place.formatted_address || '';
+                this.newWishItem.name = place.name;
+                // 優化：直接把座標帶入新項目
+                this.newWishItem.lat = loc.lat();
+                this.newWishItem.lng = loc.lng();
+            }
         });
+        input.dataset.autocompleteInit = 'true';
+    } catch (e) {}
+},
+         focusOnPocketMarker(item) {
+         if (!this.pocketMap) return;
+         
+         // 在地圖標記陣列中尋找對應的地點
+         const targetMarker = this.pocketMarkers.find(m => m.pocketItemIndex === item.originalIndex);
+         
+         if (targetMarker) {
+             // 1. 將地圖中心移到該點
+             this.pocketMap.setCenter(targetMarker.getPosition());
+             // 2. 放大地圖倍率（17 是很清楚的街道層級）
+             this.pocketMap.setZoom(17);
+             
+             // 3. 讓標記跳動一下，提醒使用者在哪裡
+             targetMarker.setAnimation(google.maps.Animation.BOUNCE);
+             setTimeout(() => { targetMarker.setAnimation(null); }, 750);
+             
+             // 4. 自動滾動頁面到地圖的位置 (讓使用者看到地圖跳轉)
+             document.getElementById('pocket-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+         } else {
+             if (!item.address) {
+                 alert("此地點尚未設定地址，無法在地圖上查看喔！");
+             }
+         }
+         },
+                 scrollToTop() {
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                 },
+         confirmDeleteTransport(item) {
+                     // 彈出確認視窗
+                     if (confirm('確定要刪除這段交通接駁說明嗎？')) {
+                         // 使用者點擊確定後才執行清除動作
+                         item.transportToNext = '';
+                         item.showTransportInput = false;
+                         this.saveData(); // 儲存至雲端
+                     }
+                 },
+                 autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
+                 toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
+                 prevPage() { if (this.wishlistPage > 1) this.wishlistPage--; },
+                 nextPage() { if (this.wishlistPage < this.totalWishlistPages) this.wishlistPage++; },
+                 loadDefaultPackingItems() {
+                     const defaults = ["護照/證件", "外幣/信用卡", "換洗衣物", "充電器/轉接頭", "盥洗用品", "常用藥品", "雨具", "網卡/Wifi機"];
+                     if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = [];
+                     defaults.forEach(name => { if (!this.packingList[this.currentPackingMember].some(i => i.name === name)) { this.packingList[this.currentPackingMember].push({ name, checked: false }); } });
+                     this.saveData();
+                 },
+                 addPackingItem() { if(this.newPackingItem.trim()) { if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; this.packingList[this.currentPackingMember].push({ name: this.newPackingItem.trim(), checked: false }); this.newPackingItem = ''; this.saveData(); } },
+                 deletePackingItem(idx) { if(confirm("刪除物品？")) { this.packingList[this.currentPackingMember].splice(idx, 1); this.saveData(); } },
+                 addLink() { if(this.newLink.title && this.newLink.url) { this.externalLinks.push({ ...this.newLink }); this.newLink = { title: '', url: '' }; this.saveData(); } else { alert("請輸入完整標題與網址"); } },
+                 deleteLink(idx) { if(confirm("刪除此連結？")) { this.externalLinks.splice(idx, 1); this.saveData(); } },
+                 addWishItem() { if (this.newWishItem.name) { this.wishlist.push({ ...this.newWishItem, checked: false }); this.newWishItem = { name: '', url: '', address: '', note: '', day: 'all', category: 'food' }; this.saveData(); } },
+                 deleteWishItem(originalIdx) { if(confirm("刪除項目？")) { this.wishlist.splice(originalIdx, 1); if (this.paginatedWishlist.length === 0 && this.wishlistPage > 1) { this.wishlistPage--; } this.saveData(); } },
+                 openWishEditModal(idx) {
+                     const item = this.wishlist[idx];
+                     this.editingWishIdx = idx;
+                     // 使用 {...item} 會把名稱、天數、地址、類別全部複製一份到編輯暫存區
+                     this.editWishTemp = { 
+                         category: 'food', // 給一個預設值防止舊資料沒有類別
+                         ...item 
+                     };
+                     this.showWishEditModal = true;
+                 },
+                 saveWishItemEdit() { if(this.editingWishIdx !== null) { this.wishlist[this.editingWishIdx] = { ...this.editWishTemp }; this.showWishEditModal = false; this.saveData(); } },
+                 syncLocalOrder() { const savedOrder = JSON.parse(localStorage.getItem('myTripOrder') || '[]'); const currentIds = Object.keys(this.allTrips); let newOrder = savedOrder.filter(id => currentIds.includes(id)); const newIds = currentIds.filter(id => !newOrder.includes(id)); this.localOrder = [...newIds, ...newOrder]; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); },
+                 moveTripBook(index, direction) { 
+                     const currentList = this.sortedTrips.map(t => t.id); 
+                     const targetIndex = index + direction; 
+                     if (targetIndex >= 0 && targetIndex < currentList.length) { 
+                         [currentList[index], currentList[targetIndex]] = [currentList[targetIndex], currentList[index]]; 
+                         this.localOrder = currentList; 
+                         localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); 
+                     } 
+                 },
+                 applyTheme(themeKey) { const styles = this.themePresets[themeKey] || this.themePresets['wood']; for (const [key, value] of Object.entries(styles)) { document.documentElement.style.setProperty(key, value); } },
+                 previewTheme(key) { this.editTemp.theme = key; this.applyTheme(key); },
+                 cancelSettings() { this.showSettingsModal = false; const originalTheme = this.allTrips[this.pendingTripId]?.theme || 'wood'; this.applyTheme(originalTheme); },
+                 confirmDeleteTrip(tripId) { if(confirm("確定要刪除整個旅程嗎？")) { this.deleteTripBook(tripId); } },
+                 deleteActivity(index) { if (confirm("確定刪除行程項目？")) { if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) { this.days[this.currentDayIndex].activities.splice(index, 1); this.saveData(); this.$nextTick(() => this.updateMapRoute()); } } },
+                 openTripSettings(tripId) { this.pendingTripId = tripId; const trip = this.allTrips[tripId]; if(!trip) return; this.editTemp = { name: trip.tripName, theme: trip.theme || 'wood' }; this.showSettingsModal = true; this.applyTheme(this.editTemp.theme); },
+                 saveTripSettings() { if (this.allTrips[this.pendingTripId]) { this.allTrips[this.pendingTripId].tripName = this.editTemp.name; this.allTrips[this.pendingTripId].theme = this.editTemp.theme; if (hasFirebase) db.ref('trips/' + this.pendingTripId).update({ tripName: this.editTemp.name, theme: this.editTemp.theme }); else localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); this.showSettingsModal = false; if (this.currentTripId === this.pendingTripId) { this.tripName = this.editTemp.name; this.applyTheme(this.editTemp.theme); } } },
+                 calcAnalysis() {
+                     const map = { 'food': { label: '美食', chartColor: '#fca5a5' }, 'transport': { label: '交通', chartColor: '#93c5fd' }, 'ticket': { label: '門票', chartColor: '#d8b4fe' }, 'entertainment': { label: '娛樂', chartColor: '#fcd34d' }, 'accommodation': { label: '住宿', chartColor: '#86efac' }, 'other': { label: '其他', chartColor: '#d1d5db' } };
+                     let stats = {}; Object.keys(map).forEach(k => stats[k] = 0);
+                     let totalFilteredTWD = 0; 
+                     const targetDisplayRate = parseFloat(this.rates[this.analysisCurrency] || 1);
+         
+                     this.expenses.forEach(exp => { 
+                         // --- 修正開始：跳過結清帳務的紀錄，不計入消費分析 ---
+                         if (exp.title && exp.title.startsWith('結清:')) return;
+                         // --- 修正結束 ---
+         
+                         const rate = parseFloat(this.rates[exp.currency] || 1);
+                         const cat = exp.category || 'other';
+                         let amountTWD = 0;
+         
+                         if (this.analysisFilter === 'all') {
+                             amountTWD = parseFloat(exp.amount || 0) * rate;
+                         } else { 
+                             // 特定成員分析
+                             if (exp.splitType === 'custom' && exp.customData) {
+                                 amountTWD = (parseFloat(exp.customData[this.analysisFilter]) || 0) * rate;
+                             } else {
+                                 let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                                 if (involved.includes(this.analysisFilter)) {
+                                     amountTWD = (parseFloat(exp.amount || 0) * rate) / involved.length;
+                                 }
+                             }
+                         }
+                         stats[cat] += amountTWD; 
+                         totalFilteredTWD += amountTWD;
+                     });
+         
+                     return Object.keys(stats).map(key => ({ 
+                         key, 
+                         label: map[key].label, 
+                         chartColor: map[key].chartColor, 
+                         amount: Math.round(stats[key] / targetDisplayRate), 
+                         percent: totalFilteredTWD > 0 ? Math.round((stats[key] / totalFilteredTWD) * 100) : 0 
+                     })).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount);
+                 },
+                 renderChart() {
+                     const ctx = document.getElementById('expenseChart'); if (!ctx) return;
+                     const data = this.categoryAnalysis; if (this.chartInstance) { this.chartInstance.destroy(); } if (data.length === 0) return;
+                     this.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: data.map(d => d.label), datasets: [{ data: data.map(d => d.amount), backgroundColor: data.map(d => d.chartColor), borderWidth: 2, borderColor: '#fff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' } });
+                 },
+                 loadTripList() {
+                     if (hasFirebase && db) {
+                         db.ref('trips').on('value', snapshot => {
+                             this.allTrips = snapshot.val() || {};
+                             this.syncLocalOrder(); 
+                             if (Object.keys(this.allTrips).length > 0) { 
+                                 if (!this.currentTripId) {
+                                     const topTripId = this.sortedTrips[0].id;
+                                     this.openTrip(topTripId);
+                                 } 
+                             } else { this.createNewTrip(); }
+                         }, err => { this.isLoading = false; });
+                     } else {
+                         const saved = localStorage.getItem('myTripBooks');
+                         this.allTrips = saved ? JSON.parse(saved) : {};
+                         this.syncLocalOrder();
+                         if (Object.keys(this.allTrips).length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
+                     }
+                 },
+                 createNewTrip() {
+                     const newTripId = 'trip_' + Date.now();
+                     const defaultTrip = { tripName: '新旅程', theme: 'wood', days: [{ activities: [], dailyNote: '', color: '' }], members: ['我', '旅伴'], startDate: new Date().toISOString().split('T')[0], wishlist: [], packingList: {}, externalLinks: [], changelog: [] };
+                     if (hasFirebase) db.ref('trips/' + newTripId).set(defaultTrip); else { this.allTrips[newTripId] = defaultTrip; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); }
+                     this.openTrip(newTripId);
+                 },
+                 openTrip(tripId) { this.currentTripId = tripId; this.isLoading = true; if (hasFirebase) db.ref('trips/' + tripId).once('value', s => this.handleTripData(s.val())); else this.handleTripData(this.allTrips[tripId]); },
+                 handleTripData(d) {
+                     if (d) {
+                         this.tripName = d.tripName || '';
+                         this.days = (d.days || [{ activities: [], color: '' }]).map(day => ({ 
+                             ...day, 
+                             color: day.color || '', 
+                             activities: (day.activities || []).map(act => ({
+                                 ...act,
+                                 transportToNext: act.transportToNext || '',
+                                 showTransportInput: !!act.transportToNext,
+                                 link: act.link || ''
+                             }))
+                         }));
+                         this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || [];
+                         this.changelog = d.changelog || []; 
+                         this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood');
+                         this.isLoading = false; this.showSidebar = false;
+                         this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); if(this.currentTab === 'expenses') this.renderChart(); });
+                     } else { this.isLoading = false; }
+                              setTimeout(() => {
+                     const textareas = document.querySelectorAll('textarea');
+                     textareas.forEach(el => {
+                         this.autoGrow(el);
+                     });
+                 }, 500);
+                 },
+                 deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
+                 saveData() {
+                 if (!this.currentTripId) return;
+                 if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) {
+                     this.days[this.currentDayIndex].activities.sort((a, b) => a.time.localeCompare(b.time));
+                 }
+                 this.statusMessage = 'WAITING...';
+                 if (this.saveTimer) clearTimeout(this.saveTimer);
+                 
+                 this.saveTimer = setTimeout(() => {
+                     this.isSyncing = true; // 顯示黃燈閃爍
+                     const data = { 
+                         tripName: this.tripName, days: this.days, members: this.members, 
+                         expenses: this.expenses, wishlist: this.wishlist, packingList: this.packingList, 
+                         rates: this.rates, externalLinks: this.externalLinks, startDate: this.startDate, 
+                         theme: this.allTrips[this.currentTripId].theme || 'wood', changelog: this.changelog 
+                     };
+                     
+                     if (hasFirebase) {
+                         db.ref('trips/' + this.currentTripId).update(data).then(() => {
+                             this.isSyncing = false; // 關閉閃爍
+                             this.statusMessage = 'CLOUD SYNCED ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                         });
+                     } else {
+                         localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
+                         this.isSyncing = false;
+                         this.statusMessage = 'LOCAL SAVED';
+                     }
+                     this.saveTimer = null;
+                 }, 800);
+             },
+                 moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
+                 getSplitDetails(exp) { 
+                     let details = []; 
+                     if (exp.splitType === 'custom' && exp.customData) { 
+                         for (let name in exp.customData) {
+                             if (this.members.includes(name)) {
+                                 details.push({ name, amount: parseFloat(exp.customData[name]) || 0 }); 
+                             }
+                         }
+                     } else { 
+                         let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                         if (involved.length > 0) { 
+                             let per = Math.round(parseFloat(exp.amount || 0) / involved.length * 100) / 100; 
+                             involved.forEach(name => details.push({ name, amount: per })); 
+                         } 
+                     } 
+                     return details; 
+                 },
+                 toggleExpandHistory(index) { const idx = this.expandedHistoryIndices.indexOf(index); if (idx > -1) this.expandedHistoryIndices.splice(idx, 1); else this.expandedHistoryIndices.push(index); },
+                 isExpanded(index) { return this.expandedHistoryIndices.includes(index); },
+                 changeSplitMode(mode) { this.splitMode = mode; if(mode === 'custom') { this.customSplitAmounts = {}; this.members.forEach(m => this.customSplitAmounts[m] = 0); this.newExpense.amount = 0; } },
+                 updateTotalFromCustom() { let sum = 0; for (let key in this.customSplitAmounts) sum += (parseFloat(this.customSplitAmounts[key]) || 0); this.newExpense.amount = sum; },
+                 getDateLabel(index) { if (!this.startDate) return ''; const start = new Date(this.startDate); start.setDate(start.getDate() + index); return (start.getMonth() + 1) + '/' + start.getDate(); },
+                 getCategoryIcon(cat) { const icons = { 'food': '🍴', 'transport': '🚅', 'ticket': '🎫', 'entertainment': '🎡', 'accommodation': '🏨', 'other': '📦' }; return icons[cat] || '📦'; },
+                 toggleInvolved(member) { const idx = this.newExpense.involved.indexOf(member); if (idx > -1) this.newExpense.involved.splice(idx, 1); else this.newExpense.involved.push(member); },
+                handlePhotoUpload(event) {
+                     const file = event.target.files[0];
+                     if (!file) return;
+                     
+                     // 增加檢查：如果檔案原本就很小 (小於 200KB)，則不壓縮直接讀取，節省效能
+                     if (file.size < 200 * 1024) {
+                         const reader = new FileReader();
+                         reader.onload = (e) => { this.newExpense.photo = e.target.result; };
+                         reader.readAsDataURL(file);
+                         return;
+                     }
+         
+                     const reader = new FileReader();
+                     reader.onload = (e) => {
+                         const img = new Image();
+                         img.onload = () => {
+                             const canvas = document.createElement('canvas');
+                             let width = img.width;
+                             let height = img.height;
+                             const max_size = 600; // 最大邊長 800px，適合手機查看且節省空間
+         
+                             if (width > height && width > max_size) {
+                                 height *= max_size / width;
+                                 width = max_size;
+                             } else if (height > max_size) {
+                                 width *= max_size / height;
+                                 height = max_size;
+                             }
+         
+                             canvas.width = width;
+                             canvas.height = height;
+                             const ctx = canvas.getContext('2d');
+                             ctx.drawImage(img, 0, 0, width, height);
+                             
+                             // 壓縮成 70% 品質的 JPG 字串
+                             this.newExpense.photo = canvas.toDataURL('image/jpeg', 0.4);
+                         };
+                         img.src = e.target.result;
+                     };
+                     reader.readAsDataURL(file);
+                 },
+                 addChangelog(action, title) {
+                     const now = new Date();
+                     const log = {
+                         time: `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`,
+                         action,
+                         title
+                     };
+                     this.changelog.unshift(log);
+                     if(this.changelog.length > 10) this.changelog.pop();
+                 },
+                 editExpenseRecord(idx) {
+                     const exp = this.expenses[idx];
+                     this.editingExpenseIndex = idx;
+                     this.newExpense = JSON.parse(JSON.stringify(exp));
+                     if(!this.newExpense.date) this.newExpense.date = new Date().toISOString().split('T')[0];
+                     this.splitMode = exp.splitType || 'equal';
+                     if (this.splitMode === 'custom') {
+                         this.customSplitAmounts = JSON.parse(JSON.stringify(exp.customData || {}));
+                     }
+                     this.$nextTick(() => {
+                         if (this.$refs.expenseForm) {
+                             this.$refs.expenseForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                         }
+                     });
+                 },
+                 cancelEditExpense() {
+                     this.editingExpenseIndex = null;
+                     this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '', date: new Date().toISOString().split('T')[0] };
+                     this.customSplitAmounts = {};
+                 },
+                 addExpense() { 
+                     if(this.newExpense.title && (this.newExpense.amount !== '') && this.newExpense.payer) { 
+                         let record = JSON.parse(JSON.stringify(this.newExpense)); 
+                         
+                         if (this.splitMode === 'custom') {
+                             let sum = 0;
+                             let sanitizedCustom = {};
+                             // 確保自訂金額僅包含現有成員並精確加總
+                             this.members.forEach(m => {
+                                 let val = parseFloat(this.customSplitAmounts[m]) || 0;
+                                 sanitizedCustom[m] = val;
+                                 sum += val;
+                             });
+                             record.amount = sum;
+                             record.customData = sanitizedCustom;
+                             record.splitType = 'custom';
+                         } else {
+                             record.amount = parseFloat(record.amount) || 0;
+                             record.splitType = 'equal';
+                             record.involved = record.involved.filter(m => this.members.includes(m));
+                         }
+                         
+                         if (this.editingExpenseIndex !== null) {
+                             this.expenses[this.editingExpenseIndex] = record;
+                             this.addChangelog('EDIT', record.title);
+                             this.editingExpenseIndex = null;
+                         } else {
+                             if(!record.date) record.date = new Date().toISOString().split('T')[0];
+                             this.expenses.push(record); 
+                             this.addChangelog('ADD', record.title);
+                         }
+                         
+                         this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '', date: new Date().toISOString().split('T')[0] }; 
+                         this.customSplitAmounts = {}; 
+                         this.saveData(); 
+                     } 
+                 },
+                 deleteExpense(idx) { 
+                     if (confirm("確定刪除紀錄？")) { 
+                         const title = this.expenses[idx].title;
+                         this.expenses.splice(idx, 1); 
+                         this.addChangelog('DELETE', title);
+                         this.saveData(); 
+                     } 
+                 },
+                 addMember() { if(this.newMemberName.trim()) { this.members.push(this.newMemberName.trim()); this.newMemberName=''; this.saveData(); } },
+                 removeMember(idx) { if(confirm('移除成員？')) { this.members.splice(idx, 1); this.saveData(); } },
+                 openGoogleMaps(place) { if (!place) return; window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`, '_blank'); },
+                 getHour(timeStr) { return (timeStr && timeStr.includes(':')) ? timeStr.split(':')[0] : '10'; },
+                 getMinute(timeStr) { return (timeStr && timeStr.includes(':')) ? timeStr.split(':')[1] : '00'; },
+                 updateTime(item, value, type) { let h = this.getHour(item.time), m = this.getMinute(item.time); item.time = (type === 'hour') ? `${value}:${m}` : `${h}:${value}`; this.saveData(); },
+                 getTypeColor(type) { switch(type) { case 'food': return 'bg-[#d8a48f]'; case 'transport': return 'bg-[#8ab8a8]'; case 'accommodation': return 'bg-[#9ea6b3]'; default: return 'bg-[#dccbba]'; } },
+                 retryInitMap(attempts) { if (attempts > 10) return; if (typeof google !== 'undefined') this.initMap(); else setTimeout(() => this.retryInitMap(attempts + 1), 300); },
+                 initMap() { if (!document.getElementById("google-map")) return; try { this.directionsService = new google.maps.DirectionsService(); this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, suppressMarkers: false }); this.map = new google.maps.Map(document.getElementById("google-map"), { 
+         zoom: 12, 
+         center: { lat: 35.68, lng: 139.76 }, 
+         disableDefaultUI: true,
+         gestureHandling: 'greedy' // 讓單指可以拖動
+         }); this.directionsRenderer.setMap(this.map); this.updateMapRoute(); } catch (e) { this.mapError = true; } },
+                 async updateMapRoute() {
+    if (!this.directionsService || this.currentTab !== 'schedule' || this.isMapUpdating || !this.days[this.currentDayIndex]) return;
+    this.isMapUpdating = true;
+    try {
+        const activities = this.days[this.currentDayIndex].activities || [];
+        // 篩選有地點的項目
+        const validActivities = activities.filter(a => a.place && a.place.trim() !== "" && a.type !== 'transport');
+        
+        if (validActivities.length === 0) {
+            if (this.directionsRenderer) this.directionsRenderer.setDirections({ routes: [] });
+            this.isMapUpdating = false;
+            return;
+        }
 
-        function renderInfo() { if (restaurantInfo.trim()) { document.getElementById('restaurantInfoBox').classList.remove('hidden'); document.getElementById('restaurantInfoContent').innerText = restaurantInfo; } }
+        const geocoder = new google.maps.Geocoder();
+        let waypoints = [];
 
-        loadData();
-    </script>
-</body>
+        for (let act of validActivities) {
+            // 如果已經有座標，直接用；沒有才解析 (Geocoding)
+            if (act.lat && act.lng) {
+                waypoints.push(new google.maps.LatLng(act.lat, act.lng));
+            } else {
+                try {
+                    const res = await this.geocodePromise(geocoder, act.place);
+                    if (res && res[0]) {
+                        const loc = res[0].geometry.location;
+                        // 順便存起來，下次就不用解析了
+                        act.lat = loc.lat();
+                        act.lng = loc.lng();
+                        waypoints.push(loc);
+                        this.saveData(); // 存到雲端
+                    }
+                } catch (e) { console.warn("無法解析地點: " + act.place); }
+            }
+        }
+
+        if (waypoints.length > 1) {
+            this.directionsService.route({
+                origin: waypoints[0],
+                destination: waypoints[waypoints.length - 1],
+                waypoints: waypoints.slice(1, -1).map(loc => ({ location: loc, stopover: true })),
+                travelMode: 'DRIVING'
+            }, (res, status) => {
+                if (status === 'OK') this.directionsRenderer.setDirections(res);
+            });
+        }
+    } catch (e) { console.error("Map Update Error", e); } finally { this.isMapUpdating = false; }
+},
+                 sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); },
+                 geocodePromise(geocoder, address) { return new Promise((resolve, reject) => { geocoder.geocode({ 'address': address }, (results, status) => { if (status === 'OK') resolve(results); else reject(status); }); }); },
+                 changeDay(index) {
+                 if(this.days[index]) {
+                     this.currentDayIndex = index;
+                     this.$nextTick(() => {
+                         // 執行地圖更新
+                         this.updateMapRoute();
+                         
+                         // --- 執行自動捲動邏輯 ---
+                         const container = document.getElementById('day-scroll-nav');
+                         const activeTab = document.getElementById('day-tab-' + index);
+                         
+                         if (container && activeTab) {
+                             // 計算：將目標按鈕捲動到容器的正中央
+                             const containerWidth = container.offsetWidth;
+                             const tabWidth = activeTab.offsetWidth;
+                             const tabOffsetLeft = activeTab.offsetLeft;
+                             
+                             // 捲動目標位置 = 按鈕左邊位置 - (容器寬度/2) + (按鈕寬度/2)
+                             const scrollPos = tabOffsetLeft - (containerWidth / 2) + (tabWidth / 2);
+                             
+                             container.scrollTo({
+                                 left: scrollPos,
+                                 behavior: 'smooth'
+                             });
+                         }
+                     });
+                 }
+             },
+                 moveDay(index, direction) { const target = index + direction; if (target >= 0 && target < this.days.length) { [this.days[index], this.days[target]] = [this.days[target], this.days[index]]; if (this.currentDayIndex === index) this.currentDayIndex = target; else if (this.currentDayIndex === target) this.currentDayIndex = index; this.saveData(); } },
+                 addDay() { const newDay = { activities: [], dailyNote: '', color: '' }; this.days.splice(this.currentDayIndex + 1, 0, newDay); this.changeDay(this.currentDayIndex + 1); this.saveData(); },
+                 deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: '', color: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); } },
+                 addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing', transportToNext: '', showTransportInput: false, link: '' }); this.saveData(); },
+                 initAutocomplete(index, event) {
+    const input = event.target;
+    if (input.dataset.autocompleteInit) return;
+    try {
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (place.geometry) {
+                // 優化：存入經緯度
+                const loc = place.geometry.location;
+                const activity = this.days[this.currentDayIndex].activities[index];
+                activity.place = place.name;
+                activity.lat = loc.lat();
+                activity.lng = loc.lng();
+                
+                this.saveData(); 
+                this.updateMapRoute();
+            }
+        });
+        input.dataset.autocompleteInit = 'true';
+    } catch (e) { console.error("Autocomplete Error", e); }
+},
+                 openActivityEditModal(index) {
+                 const item = this.days[this.currentDayIndex].activities[index];
+                 this.editingActivityIdx = index;
+                 // 拆解時間
+                 const timeParts = item.time.split(':');
+                 this.editActivityTemp = {
+                     hour: timeParts[0] || '10',
+                     minute: timeParts[1] || '00',
+                     place: item.place,
+                     note: item.note,
+                     link: item.link || ''
+                 };
+                 this.showActivityEditModal = true;
+             },
+             saveActivityEdit() {
+                 if (this.editingActivityIdx !== null) {
+                     const item = this.days[this.currentDayIndex].activities[this.editingActivityIdx];
+                     item.time = `${this.editActivityTemp.hour}:${this.editActivityTemp.minute}`;
+                     item.place = this.editActivityTemp.place;
+                     item.lat = null; // 清除舊座標
+                     item.lng = null; // 清除舊座標
+                     item.note = this.editActivityTemp.note;
+                     item.link = this.editActivityTemp.link;
+                     
+                     this.showActivityEditModal = false;
+                     this.saveData(); // 儲存到雲端
+                     this.updateMapRoute(); // 更新地圖
+                 }
+             },
+                 settleDebt(trans) { 
+                     if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; 
+                     this.expenses.push({ 
+                         title: `結清: ${trans.from} → ${trans.to}`, 
+                         amount: parseFloat(trans.amount), 
+                         currency: this.displayCurrency, 
+                         payer: trans.from, 
+                         involved: [trans.to], 
+                         category: 'other', 
+                         date: new Date().toISOString().split('T')[0] 
+                     }); 
+                     this.saveData(); 
+                 },
+                 handleActivityLink(item) { if (item.link) window.open(item.link, '_blank'); else { const url = prompt("輸入網址:", "https://"); if (url) { item.link = url; this.saveData(); } } }
+             }
+         }).mount('#app');
+      </script>
+   </body>
 </html>
